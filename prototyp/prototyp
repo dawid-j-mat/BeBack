@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeBack – Kierunek 2: Papierowy dziennik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@500;600;700&family=Karla:ital,wght@0,400;0,500;0,700;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papier:#F1E8D4;
+  --papier-jasny:#F7F1E2;
+  --kraft:#E4D6B8;
+  --atrament:#26324D;            /* fountain-pen blue-black */
+  --atrament-70:rgba(38,50,77,.72);
+  --atrament-45:rgba(38,50,77,.45);
+  --atrament-20:rgba(38,50,77,.2);
+  --lotniczy-czerwony:#C23A2E;   /* airmail red */
+  --lotniczy-niebieski:#2B4C9B;  /* airmail blue */
+  --zielen:#3A6B4A;
+  --olowek:#8A7E66;
+  --czerwien:#B0342C;
+  --zloto:#B8860B;
+  --bialy:#FFFDF7;
+  --font-serif:'Domine',Georgia,serif;
+  --font-tekst:'Karla',system-ui,sans-serif;
+  --font-reka:'Caveat',cursive;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font-tekst);
+  background:#20293E;
+  background-image:radial-gradient(ellipse at 70% 15%, #2E3B5C 0%, #20293E 65%);
+  color:var(--atrament);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:28px 16px;gap:18px;
+}
+.meta-bar{display:flex;align-items:center;gap:14px;color:var(--papier-jasny)}
+.meta-bar .dir{font-family:var(--font-tekst);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.lang-toggle{display:flex;border:1px solid rgba(247,241,226,.4);border-radius:6px;overflow:hidden}
+.lang-toggle button{font-family:var(--font-tekst);font-weight:700;font-size:11px;letter-spacing:.08em;padding:6px 14px;background:transparent;color:var(--papier-jasny);border:0;cursor:pointer;opacity:.6}
+.lang-toggle button.on{background:var(--papier-jasny);color:var(--atrament);opacity:1}
+
+/* ---------- phone ---------- */
+.phone{
+  width:min(392px,100%);height:min(800px,calc(100vh - 120px));min-height:620px;
+  background:var(--papier);border-radius:38px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;outline:8px solid rgba(0,0,0,.4);
+  box-shadow:0 30px 70px rgba(0,0,0,.45);
+}
+/* paper grain */
+.phone::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.25 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;z-index:2}
+.screen.active{display:flex}
+
+/* airmail edge – the direction's signature */
+.lotniczy{
+  height:9px;flex:none;
+  background:repeating-linear-gradient(-45deg,
+    var(--lotniczy-czerwony) 0 12px, var(--bialy) 12px 24px,
+    var(--lotniczy-niebieski) 24px 36px, var(--bialy) 36px 48px);
+  border-bottom:1px solid var(--atrament-20);
+}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px}
+.wordmark{display:flex;align-items:center;gap:9px;color:var(--atrament)}
+.wordmark .znak{
+  width:32px;height:32px;border-radius:50%;background:var(--lotniczy-czerwony);color:var(--papier-jasny);
+  display:grid;place-items:center;font-size:15px;transform:rotate(-6deg);
+  box-shadow:inset 0 0 0 2px rgba(247,241,226,.55), 0 1px 0 rgba(38,50,77,.25);
+}
+.wordmark .nazwa{font-family:var(--font-serif);font-weight:700;font-size:21px;letter-spacing:-.01em}
+.top .kto{font-family:var(--font-reka);font-size:18px;color:var(--atrament-70);transform:rotate(-2deg)}
+
+/* ---------- map ---------- */
+.mapa-wrap{flex:1;position:relative;overflow:hidden}
+.mapa-wrap>svg{position:absolute;inset:0;width:100%;height:100%}
+.pin{cursor:pointer;transition:transform .18s ease}
+.pin:hover{transform:translateY(-2px)}
+.filtry{
+  position:absolute;top:10px;left:0;right:0;display:flex;gap:8px;justify-content:center;z-index:3;
+}
+.filtr{
+  font-family:var(--font-tekst);font-weight:700;font-size:11.5px;letter-spacing:.04em;
+  background:var(--bialy);border:1px solid var(--atrament-45);color:var(--atrament);
+  border-radius:6px;padding:7px 13px;cursor:pointer;box-shadow:0 2px 0 rgba(38,50,77,.15);
+}
+.filtr.on{background:var(--atrament);color:var(--papier-jasny);border-color:var(--atrament)}
+.kompas{position:absolute;right:14px;bottom:96px;opacity:.75;width:54px}
+
+/* ---------- bottom nav ---------- */
+.nav{
+  height:82px;background:var(--papier-jasny);border-top:1px dashed var(--atrament-45);
+  display:grid;grid-template-columns:1fr 104px 1fr;align-items:center;padding:0 6px 6px;position:relative;z-index:5;
+}
+.nav>button:not(.fab){background:none;border:0;cursor:pointer;font-family:var(--font-tekst);font-weight:700;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--atrament-45);
+  display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:4px}
+.nav>button.on{color:var(--atrament)}
+.nav svg.ikona{width:22px;height:22px}
+.fab{
+  width:68px;height:68px;border-radius:50%;justify-self:center;margin-top:-30px;cursor:pointer;border:0;
+  background:var(--lotniczy-czerwony);position:relative;display:grid;place-items:center;
+  box-shadow:0 3px 0 #8E2A21, 0 12px 22px rgba(32,41,62,.4), inset 0 0 0 3px rgba(247,241,226,.5), inset 0 0 0 4.5px var(--lotniczy-czerwony), inset 0 -6px 12px rgba(0,0,0,.18), inset 0 5px 8px rgba(255,255,255,.22);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.fab:active{transform:translateY(2px);box-shadow:0 1px 0 #8E2A21, 0 6px 14px rgba(32,41,62,.35), inset 0 0 0 3px rgba(247,241,226,.5), inset 0 0 0 4.5px var(--lotniczy-czerwony), inset 0 -4px 8px rgba(0,0,0,.18)}
+.fab svg{width:26px;height:26px;stroke:var(--papier-jasny);stroke-width:2.6;stroke-linecap:round}
+.fab .podpis{
+  position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+  font-family:var(--font-reka);font-size:13px;color:var(--papier-jasny);opacity:0;pointer-events:none;
+}
+
+/* ---------- entry card = journal page ---------- */
+.zaslona{position:absolute;inset:0;background:rgba(32,41,62,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:8}
+.zaslona.on{opacity:1;pointer-events:auto}
+.karta{
+  position:absolute;left:10px;right:10px;bottom:10px;z-index:9;background:var(--papier-jasny);
+  border:1px solid var(--atrament-20);border-radius:10px;
+  transform:translateY(110%) rotate(.6deg);transition:transform .34s cubic-bezier(.3,.9,.35,1);
+  max-height:88%;overflow-y:auto;box-shadow:0 -14px 40px rgba(32,41,62,.35);
+}
+.karta.on{transform:translateY(0) rotate(.6deg)}
+.karta-wnetrze{padding:22px 20px 22px;position:relative}
+.tasma{
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-1.5deg);
+  width:110px;height:22px;background:rgba(214,196,150,.85);border:1px solid rgba(38,50,77,.12);
+  box-shadow:0 1px 3px rgba(38,50,77,.15);
+}
+.foto{
+  margin:4px auto 14px;width:88%;background:var(--bialy);padding:8px 8px 26px;
+  border:1px solid var(--atrament-20);transform:rotate(-1.2deg);
+  box-shadow:0 3px 10px rgba(38,50,77,.18);position:relative;
+}
+.foto svg{width:100%;display:block}
+.foto .podpis-foto{
+  position:absolute;bottom:3px;left:0;right:0;text-align:center;
+  font-family:var(--font-reka);font-size:15px;color:var(--atrament-70);
+}
+.foto.pusta{padding:22px 8px;text-align:center;font-family:var(--font-reka);font-size:17px;color:var(--atrament-45);
+  background:repeating-linear-gradient(0deg, var(--bialy) 0 26px, rgba(38,50,77,.06) 26px 27px)}
+.naroznik{position:absolute;width:16px;height:16px;border:3px solid var(--atrament-70)}
+.n1{top:-2px;left:-2px;border-right:0;border-bottom:0}
+.n2{top:-2px;right:-2px;border-left:0;border-bottom:0}
+.n3{bottom:-2px;left:-2px;border-right:0;border-top:0}
+.n4{bottom:-2px;right:-2px;border-left:0;border-top:0}
+.karta .stempel{position:absolute;top:8px;right:8px;z-index:2}
+.karta h2{font-family:var(--font-serif);font-weight:700;font-size:23px;line-height:1.15;max-width:75%}
+.kat-linia{font-family:var(--font-tekst);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lotniczy-niebieski);margin:4px 0 10px}
+.karta .opis{font-size:15.5px;line-height:1.6;border-top:1px dashed var(--atrament-45);padding-top:10px}
+.prywatna{
+  margin-top:14px;border:1px dashed var(--atrament-45);border-radius:8px;background:var(--papier);
+  padding:11px 13px;display:flex;gap:10px;align-items:flex-start;
+}
+.prywatna svg{flex:none;width:15px;height:15px;margin-top:3px;color:var(--atrament-70)}
+.prywatna b{display:block;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--atrament-70);margin-bottom:2px}
+.prywatna p{font-family:var(--font-reka);font-size:17px;line-height:1.35;color:var(--atrament-70)}
+.meta-linia{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+.meta-linia .data-reka{font-family:var(--font-reka);font-size:17px;color:var(--atrament-70);transform:rotate(-1deg)}
+.btn-maly{
+  font-family:var(--font-tekst);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--bialy);border:1px solid var(--atrament-45);color:var(--atrament);border-radius:6px;
+  padding:8px 16px;cursor:pointer;box-shadow:0 2px 0 rgba(38,50,77,.15);
+}
+
+/* ---------- stamp ---------- */
+.stempel{width:104px;height:104px;transform:rotate(8deg);filter:drop-shadow(0 1px 2px rgba(38,50,77,.15))}
+.stempel svg{width:100%;height:100%;mix-blend-mode:multiply;opacity:.88}
+.stempel.maly{width:80px;height:80px}
+
+/* ---------- add flow ---------- */
+.krok-pas{display:flex;gap:6px;padding:0 20px;margin-top:4px}
+.krok-pas i{flex:1;height:4px;border-radius:2px;background:var(--kraft);border:1px solid var(--atrament-20)}
+.krok-pas i.on{background:var(--lotniczy-niebieski);border-color:var(--lotniczy-niebieski)}
+.krok-tytul{padding:20px 20px 4px}
+.krok-tytul .nr{font-family:var(--font-reka);font-size:19px;color:var(--lotniczy-czerwony)}
+.krok-tytul h1{font-family:var(--font-serif);font-size:26px;font-weight:700;margin-top:2px}
+.krok-cialo{flex:1;overflow-y:auto;padding:14px 20px 20px;display:flex;flex-direction:column;gap:10px}
+.szukaj{
+  display:flex;align-items:center;gap:10px;background:var(--bialy);border:1px solid var(--atrament-45);
+  border-radius:8px;padding:13px 14px;color:var(--atrament-45);font-size:14.5px;box-shadow:inset 0 2px 4px rgba(38,50,77,.06);
+}
+.pod-naglowek{font-family:var(--font-tekst);font-weight:700;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--atrament-70);margin:6px 2px 0;display:flex;align-items:center;gap:7px}
+.pod-naglowek .gps{width:7px;height:7px;border-radius:50%;background:var(--zielen);animation:mig 1.4s infinite}
+@keyframes mig{50%{opacity:.35}}
+.miejsce{
+  display:flex;align-items:center;justify-content:space-between;background:var(--bialy);
+  border:1px solid var(--atrament-45);border-radius:8px;padding:14px;cursor:pointer;text-align:left;
+  font-family:var(--font-tekst);box-shadow:0 2px 0 rgba(38,50,77,.12);transition:transform .12s;
+}
+.miejsce:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(38,50,77,.12)}
+.miejsce b{font-size:15.5px;font-weight:700;display:block}
+.miejsce small{font-size:12.5px;color:var(--atrament-70)}
+.miejsce .dyst{font-family:var(--font-reka);font-size:16px;color:var(--atrament-45)}
+.kafle{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kafel{
+  aspect-ratio:1/1.12;border:1px solid var(--atrament-45);border-radius:8px;background:var(--bialy);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;
+  font-family:var(--font-tekst);font-weight:700;font-size:13.5px;color:var(--atrament);
+  box-shadow:0 2px 0 rgba(38,50,77,.12);transition:all .12s;
+}
+.kafel svg{width:30px;height:30px;color:var(--atrament)}
+.kafel:active,.kafel.on{background:var(--atrament);color:var(--papier-jasny);transform:translateY(1px);box-shadow:0 1px 0 rgba(38,50,77,.12)}
+.kafel:active svg,.kafel.on svg{color:var(--papier-jasny)}
+.podpowiedz{font-family:var(--font-reka);font-size:16px;color:var(--atrament-45);text-align:center;margin-top:4px}
+.ocena-btn{
+  display:flex;align-items:center;gap:14px;background:var(--bialy);border:1px solid var(--atrament-45);
+  border-radius:8px;padding:17px 16px;cursor:pointer;text-align:left;width:100%;font-family:var(--font-tekst);
+  box-shadow:0 2px 0 rgba(38,50,77,.12);transition:all .12s;
+}
+.ocena-btn:active,.ocena-btn.on{transform:translateY(1px)}
+.ocena-btn .znaczek{
+  width:34px;height:34px;flex:none;border-radius:50%;border:2px solid;display:grid;place-items:center;
+  font-family:var(--font-serif);font-weight:700;font-size:15px;transform:rotate(-8deg);
+}
+.ocena-btn[data-o="wroce"] .znaczek{color:var(--zielen);border-color:var(--zielen)}
+.ocena-btn[data-o="mozna"] .znaczek{color:var(--olowek);border-color:var(--olowek)}
+.ocena-btn[data-o="odradzam"] .znaczek{color:var(--czerwien);border-color:var(--czerwien)}
+.ocena-btn b{font-family:var(--font-serif);font-size:17.5px;font-weight:700;display:block}
+.ocena-btn small{font-size:12.5px;color:var(--atrament-70)}
+.ocena-btn.on{background:var(--atrament)}
+.ocena-btn.on b{color:var(--papier-jasny)}
+.ocena-btn.on small{color:rgba(247,241,226,.65)}
+textarea{
+  width:100%;min-height:118px;resize:none;border:1px solid var(--atrament-45);border-radius:8px;
+  background:repeating-linear-gradient(0deg, var(--bialy) 0 27px, rgba(38,50,77,.07) 27px 28px);
+  padding:13px 14px;font-family:var(--font-tekst);font-size:15.5px;line-height:28px;color:var(--atrament);
+  box-shadow:inset 0 2px 4px rgba(38,50,77,.06);
+}
+textarea:focus{outline:none;border-color:var(--lotniczy-niebieski)}
+.licznik{font-family:var(--font-reka);font-size:16px;color:var(--atrament-45);text-align:right;margin-top:-4px}
+.licznik.limit{color:var(--czerwien)}
+.wow-chip{
+  display:none;align-items:center;gap:12px;border:1.5px dashed var(--zloto);border-radius:8px;
+  padding:12px 14px;cursor:pointer;background:none;font-family:var(--font-tekst);text-align:left;width:100%;
+}
+.wow-chip.widoczny{display:flex;animation:wjazd .25s ease}
+@keyframes wjazd{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.wow-chip .gwiazda{width:22px;height:22px;flex:none;background:var(--zloto);border:1px solid #8F7318;border-radius:50%;display:grid;place-items:center;color:#FFF8E6;font-size:11px;line-height:1}
+.wow-chip b{font-family:var(--font-serif);font-size:15px}
+.wow-chip small{display:block;font-size:12px;color:var(--atrament-70)}
+.wow-chip.on{background:var(--zloto);border-style:solid}
+.wow-chip.on b,.wow-chip.on small,.wow-chip.on .gwiazda{color:var(--bialy)}
+.foto-drop{
+  border:1px dashed var(--atrament-45);border-radius:8px;padding:15px;display:flex;align-items:center;gap:12px;
+  color:var(--atrament-70);cursor:pointer;background:none;width:100%;font-family:var(--font-tekst);text-align:left;
+}
+.foto-drop svg{width:22px;height:22px;flex:none}
+.foto-drop b{font-size:14px;display:block;font-weight:700}
+.foto-drop small{font-size:12px;color:var(--atrament-45)}
+.stopka-kroku{padding:12px 20px 22px;display:flex;gap:10px}
+.btn{
+  flex:1;border-radius:8px;padding:16px;font-family:var(--font-serif);font-weight:700;font-size:16px;
+  cursor:pointer;border:1px solid var(--atrament);transition:transform .12s;
+}
+.btn:active{transform:translateY(1px)}
+.btn.cichy{background:none;color:var(--atrament);flex:0 0 auto;padding:16px 20px;font-family:var(--font-tekst);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.btn.pieczec{background:var(--lotniczy-czerwony);border-color:#8E2A21;color:var(--papier-jasny);box-shadow:0 3px 0 #8E2A21}
+.btn.pieczec:active{box-shadow:0 1px 0 #8E2A21}
+
+/* ---------- stamp animation ---------- */
+.przybicie{position:absolute;inset:0;background:var(--papier-jasny);z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+.przybicie.on{display:flex}
+.przybicie .stempel{width:190px;height:190px;transform:rotate(8deg) scale(2.6);opacity:0}
+.przybicie.animuj .stempel{animation:thud .55s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes thud{
+  0%{transform:rotate(-3deg) scale(2.6);opacity:0}
+  60%{transform:rotate(9deg) scale(.96);opacity:1}
+  100%{transform:rotate(8deg) scale(1);opacity:1}
+}
+.przybicie .fala{position:absolute;width:190px;height:190px;border-radius:50%;border:2px solid var(--lotniczy-czerwony);opacity:0}
+.przybicie.animuj .fala{animation:fala .7s ease-out .28s forwards}
+@keyframes fala{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
+.przybicie p{font-family:var(--font-reka);font-size:22px;color:var(--atrament-70);opacity:0;transform:rotate(-2deg)}
+.przybicie.animuj p{animation:pojaw .4s ease .55s forwards}
+@keyframes pojaw{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ---------- journal ---------- */
+.dziennik-cialo{flex:1;overflow-y:auto;padding:6px 20px 20px}
+.miesiac{display:flex;align-items:center;gap:10px;margin:18px 2px 10px}
+.miesiac b{font-family:var(--font-serif);font-size:14px;font-weight:700;color:var(--atrament-70)}
+.miesiac i{flex:1;border-top:1px dashed var(--atrament-45)}
+.miesiac span{font-family:var(--font-reka);font-size:15px;color:var(--atrament-45)}
+.wpis-rzad{
+  width:100%;display:flex;align-items:center;gap:13px;background:var(--bialy);border:1px solid var(--atrament-20);
+  border-radius:8px;padding:13px 14px;margin-bottom:9px;cursor:pointer;text-align:left;font-family:var(--font-tekst);
+  box-shadow:0 2px 0 rgba(38,50,77,.1);
+}
+.mini-stempel{
+  width:30px;height:30px;flex:none;border-radius:50%;border:2px solid;display:grid;place-items:center;
+  font-family:var(--font-serif);font-weight:700;font-size:13px;transform:rotate(-8deg);position:relative;
+}
+.mini-stempel.s-ziel{color:var(--zielen);border-color:var(--zielen)}
+.mini-stempel.s-olo{color:var(--olowek);border-color:var(--olowek)}
+.mini-stempel.s-czer{color:var(--czerwien);border-color:var(--czerwien)}
+.mini-stempel .wow-znak{position:absolute;top:-9px;right:-10px;width:15px;height:15px;background:var(--zloto);border:1px solid #8F7318;border-radius:50%;box-shadow:0 0 0 2px var(--bialy);display:grid;place-items:center;color:#FFF8E6;font-size:8px;line-height:1;transform:rotate(8deg)}
+.wpis-rzad .info{flex:1;min-width:0}
+.wpis-rzad b{font-family:var(--font-serif);font-size:15px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wpis-rzad small{font-size:12px;color:var(--atrament-70)}
+.wpis-rzad .data{font-family:var(--font-reka);font-size:16px;color:var(--atrament-45);flex:none}
+.chip-sync{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px dashed var(--atrament-45);border-radius:5px;padding:2px 7px;color:var(--atrament-70);display:inline-flex;align-items:center;gap:5px;margin-top:3px}
+.chip-sync i{width:6px;height:6px;border-radius:50%;background:var(--olowek);animation:mig 1.4s infinite}
+
+/* ---------- toast ---------- */
+.toast{
+  position:absolute;left:50%;bottom:102px;transform:translate(-50%,20px);z-index:30;
+  background:var(--atrament);color:var(--papier-jasny);font-size:13px;padding:11px 18px;border-radius:8px;
+  opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="meta-bar">
+  <span class="dir">Kierunek 2 / Papierowy dziennik</span>
+  <div class="lang-toggle">
+    <button id="lang-pl" class="on" onclick="setLang('pl')">PL</button>
+    <button id="lang-en" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<div class="phone" id="phone">
+
+  <!-- ===================== MAPA ===================== -->
+  <div class="screen active" id="scr-mapa">
+    <div class="lotniczy"></div>
+    <div class="top">
+      <span class="wordmark"><span class="znak">↩</span><span class="nazwa">BeBack</span></span>
+      <span class="kto">Dawid</span>
+    </div>
+    <div class="mapa-wrap">
+      <svg viewBox="0 0 390 560" preserveAspectRatio="xMidYMid slice" aria-label="mapa">
+        <rect width="390" height="560" fill="var(--papier)"/>
+        <!-- hand-drawn coast & river -->
+        <path d="M310,0 C280,70 340,130 305,200 C280,255 335,310 315,390 C300,450 355,505 335,560 L390,560 L390,0 Z"
+              fill="var(--lotniczy-niebieski)" opacity=".14"/>
+        <path d="M310,0 C280,70 340,130 305,200 C280,255 335,310 315,390 C300,450 355,505 335,560"
+              fill="none" stroke="var(--lotniczy-niebieski)" stroke-width="1.6" opacity=".5" stroke-linecap="round"
+              style="stroke-dasharray:2 0"/>
+        <!-- sketchy roads -->
+        <g fill="none" stroke="var(--atrament)" stroke-opacity=".28" stroke-width="1.6" stroke-linecap="round">
+          <path d="M-10,290 C90,278 200,296 390,268"/>
+          <path d="M148,-10 C158,150 172,380 186,570"/>
+          <path d="M-10,442 C120,430 260,448 390,428"/>
+          <path d="M60,120 C110,160 90,230 148,262"/>
+        </g>
+        <!-- hills doodles -->
+        <g fill="none" stroke="var(--atrament)" stroke-opacity=".35" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M46,205 l14,-20 l14,20"/><path d="M70,215 l11,-16 l11,16"/>
+          <path d="M250,470 l13,-18 l13,18"/><path d="M280,478 l10,-14 l10,14"/>
+        </g>
+        <!-- trail -->
+        <path d="M60,520 C110,470 80,410 140,368 C200,326 190,270 250,232 C295,204 280,150 322,110"
+              fill="none" stroke="var(--lotniczy-czerwony)" stroke-width="1.8" stroke-dasharray="1 9"
+              stroke-linecap="round" opacity=".8"/>
+        <!-- cluster demo -->
+        <g class="pin" onclick="toast('t_cluster')">
+          <circle cx="322" cy="98" r="20" fill="var(--bialy)" stroke="var(--atrament)" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <text x="322" y="103" text-anchor="middle" font-family="Domine,serif" font-weight="700" font-size="14" fill="var(--atrament)">7</text>
+          <text x="322" y="132" text-anchor="middle" font-family="Caveat,cursive" font-size="16" fill="var(--atrament)" opacity=".7">Kopenhaga</text>
+        </g>
+        <!-- pins: pushpins; data-o for filtering -->
+        <g class="pin" data-o="wroce" onclick="openEntry(0)">
+          <ellipse cx="152" cy="303" rx="7" ry="2.5" fill="var(--atrament)" opacity=".18"/>
+          <line x1="150" y1="300" x2="152" y2="288" stroke="var(--atrament)" stroke-width="1.6"/>
+          <circle cx="152" cy="282" r="10" fill="var(--zielen)" stroke="#2A4F37" stroke-width="1.5"/>
+          <circle cx="149" cy="279" r="3" fill="#fff" opacity=".4"/>
+          <g transform="translate(164,271)">
+            <circle r="8.5" fill="none" stroke="#8F7318" stroke-width="2.4" stroke-dasharray="0.5 3" stroke-linecap="round"/>
+            <circle r="6.8" fill="var(--zloto)" stroke="#8F7318" stroke-width="1"/>
+            <path d="M0,-3.6 L1.1,-1.1 L3.8,-1.1 L1.6,0.6 L2.4,3.2 L0,1.7 L-2.4,3.2 L-1.6,0.6 L-3.8,-1.1 L-1.1,-1.1 Z" fill="#FFF8E6"/>
+          </g>
+        </g>
+        <g class="pin" data-o="mozna" onclick="openEntry(1)">
+          <ellipse cx="242" cy="221" rx="7" ry="2.5" fill="var(--atrament)" opacity=".18"/>
+          <line x1="240" y1="218" x2="242" y2="206" stroke="var(--atrament)" stroke-width="1.6"/>
+          <circle cx="242" cy="200" r="10" fill="var(--olowek)" stroke="#665D48" stroke-width="1.5"/>
+          <circle cx="239" cy="197" r="3" fill="#fff" opacity=".4"/>
+        </g>
+        <g class="pin" data-o="wroce" onclick="openEntry(2)">
+          <ellipse cx="92" cy="436" rx="7" ry="2.5" fill="var(--atrament)" opacity=".18"/>
+          <line x1="90" y1="433" x2="92" y2="421" stroke="var(--atrament)" stroke-width="1.6"/>
+          <circle cx="92" cy="415" r="10" fill="var(--zielen)" stroke="#2A4F37" stroke-width="1.5"/>
+          <circle cx="89" cy="412" r="3" fill="#fff" opacity=".4"/>
+        </g>
+        <g class="pin" data-o="odradzam" onclick="openEntry(3)">
+          <ellipse cx="300" cy="476" rx="7" ry="2.5" fill="var(--atrament)" opacity=".18"/>
+          <line x1="298" y1="473" x2="300" y2="461" stroke="var(--atrament)" stroke-width="1.6"/>
+          <circle cx="300" cy="455" r="10" fill="var(--czerwien)" stroke="#7E251F" stroke-width="1.5"/>
+          <circle cx="297" cy="452" r="3" fill="#fff" opacity=".4"/>
+        </g>
+      </svg>
+      <div class="filtry">
+        <button class="filtr on" id="f-all" onclick="setFilter('all')" data-t="f_wszystko">Wszystko</button>
+        <button class="filtr" id="f-wroce" onclick="setFilter('wroce')" data-t="f_wroce">Tylko „Wrócę"</button>
+      </div>
+      <svg class="kompas" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="24" fill="none" stroke="var(--atrament)" stroke-width="1.3" opacity=".7"/>
+        <path d="M30,10 L34,30 L30,50 L26,30 Z" fill="var(--lotniczy-czerwony)" opacity=".8"/>
+        <text x="30" y="8" text-anchor="middle" font-family="Domine,serif" font-size="9" fill="var(--atrament)">N</text>
+      </svg>
+    </div>
+    <nav class="nav">
+      <button class="on" onclick="go('mapa')">
+        <svg class="ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+        <span data-t="nav_mapa">Mapa</span>
+      </button>
+      <button class="fab" onclick="startAdd()" aria-label="+">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button onclick="go('dziennik')">
+        <svg class="ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h13a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M7 3v18M11 8h5M11 12h5"/></svg>
+        <span data-t="nav_dziennik">Dziennik</span>
+      </button>
+    </nav>
+
+    <div class="zaslona" id="zaslona" onclick="closeEntry()"></div>
+    <div class="karta" id="karta">
+      <div class="tasma"></div>
+      <div class="karta-wnetrze">
+        <div class="stempel maly" id="karta-stempel"></div>
+        <div class="foto" id="karta-foto"></div>
+        <h2 id="karta-nazwa"></h2>
+        <div class="kat-linia" id="karta-kat"></div>
+        <p class="opis" id="karta-opis"></p>
+        <div class="prywatna" id="karta-pryw">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <div><b data-t="pryw_naglowek">Notatka prywatna – widzisz tylko Ty</b><p id="karta-pryw-tekst"></p></div>
+        </div>
+        <div class="meta-linia">
+          <span class="data-reka" id="karta-meta"></span>
+          <button class="btn-maly" onclick="toast('t_proto')" data-t="edytuj">Edytuj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DODAWANIE ===================== -->
+  <div class="screen" id="scr-add">
+    <div class="lotniczy"></div>
+    <div class="top">
+      <span class="wordmark"><span class="znak">↩</span><span class="nazwa">BeBack</span></span>
+      <button class="btn-maly" onclick="go('mapa')" data-t="anuluj">Anuluj</button>
+    </div>
+    <div class="krok-pas" id="krok-pas"><i class="on"></i><i></i><i></i><i></i></div>
+
+    <!-- step 1 -->
+    <div class="krok" id="krok-1" style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="krok-tytul"><span class="nr" data-t="k1_nr">krok 1 · miejsce</span><h1 data-t="k1_h">Gdzie jesteś?</h1></div>
+      <div class="krok-cialo">
+        <div class="szukaj">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span data-t="szukaj">Szukaj miejsca…</span>
+        </div>
+        <div class="pod-naglowek"><i class="gps"></i><span data-t="w_poblizu">W pobliżu (GPS)</span></div>
+        <button class="miejsce" onclick="pickPlace('Bistro Morskie Oko','Katowice')">
+          <span><b>Bistro Morskie Oko</b><small>ul. Mariacka 14, Katowice</small></span><span class="dyst">40 m</span>
+        </button>
+        <button class="miejsce" onclick="pickPlace('Kawiarnia Kattowitz','Katowice')">
+          <span><b>Kawiarnia Kattowitz</b><small>ul. Dyrekcyjna 3, Katowice</small></span><span class="dyst">120 m</span>
+        </button>
+        <button class="miejsce" onclick="pickPlace('Hotel Diament Plaza','Katowice')">
+          <span><b>Hotel Diament Plaza</b><small>ul. Dworcowa 9, Katowice</small></span><span class="dyst">210 m</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- step 2: category, one tap -->
+    <div class="krok" id="krok-2" style="display:none;flex-direction:column;flex:1;min-height:0">
+      <div class="krok-tytul"><span class="nr" data-t="k2_nr">krok 2 · kategoria</span><h1 id="k2-nazwa">Bistro Morskie Oko</h1></div>
+      <div class="krok-cialo">
+        <div class="kafle">
+          <button class="kafel" onclick="pickCat(this,'nocleg')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 18V8m0 6h18v4M3 14h18a0 0 0 0 0 0 0v0a4 4 0 0 0-4-4H8"/><circle cx="6.5" cy="10.5" r="1.6"/></svg>
+            <span data-t="kat_nocleg">Nocleg</span>
+          </button>
+          <button class="kafel" onclick="pickCat(this,'jedzenie')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3v7m-2.5-7v7M9.5 3v7M7 10v11M16 3c-1.7 1.5-2.5 3.5-2.5 6 0 2 .8 3 2.5 3v9"/></svg>
+            <span data-t="kat_jedzenie">Jedzenie</span>
+          </button>
+          <button class="kafel" onclick="pickCat(this,'atrakcja')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20 10 7l4 8 3-5 3 10Z" stroke-linejoin="round"/></svg>
+            <span data-t="kat_atrakcja">Atrakcja</span>
+          </button>
+        </div>
+      </div>
+      <div class="stopka-kroku"><button class="btn cichy" onclick="stepTo(1)" data-t="wstecz">Wstecz</button></div>
+    </div>
+
+    <!-- step 3: verdict, one tap -->
+    <div class="krok" id="krok-3" style="display:none;flex-direction:column;flex:1;min-height:0">
+      <div class="krok-tytul"><span class="nr" data-t="k3_nr">krok 3 · werdykt</span><h1 data-t="k3_h">Twój werdykt?</h1></div>
+      <div class="krok-cialo">
+        <button class="ocena-btn" data-o="wroce" onclick="pickRate(this,'wroce')">
+          <span class="znaczek">W</span><span><b data-t="o_wroce">Wrócę!</b><small data-t="o_wroce_s">Polecam bez wahania</small></span>
+        </button>
+        <button class="ocena-btn" data-o="mozna" onclick="pickRate(this,'mozna')">
+          <span class="znaczek">M</span><span><b data-t="o_mozna">Można</b><small data-t="o_mozna_s">W porządku, choć bez szału</small></span>
+        </button>
+        <button class="ocena-btn" data-o="odradzam" onclick="pickRate(this,'odradzam')">
+          <span class="znaczek">O</span><span><b data-t="o_odradzam">Odradzam</b><small data-t="o_odradzam_s">Szkoda czasu i pieniędzy</small></span>
+        </button>
+      </div>
+      <div class="stopka-kroku"><button class="btn cichy" onclick="stepTo(2)" data-t="wstecz">Wstecz</button></div>
+    </div>
+
+    <!-- step 4: note + wow + photo -->
+    <div class="krok" id="krok-4" style="display:none;flex-direction:column;flex:1;min-height:0">
+      <div class="krok-tytul"><span class="nr" data-t="k4_nr">krok 4 · opis</span><h1 data-t="k4_h">Najważniejsze, krótko</h1></div>
+      <div class="krok-cialo">
+        <textarea id="opis" maxlength="200" oninput="licz()" data-t-ph="opis_ph" placeholder="Najważniejsze w 200 znakach…"></textarea>
+        <div class="licznik"><span id="licznik">0</span> / 200</div>
+        <button class="wow-chip" id="wow" onclick="toggleWow()">
+          <span class="gwiazda">★</span><span><b data-t="wow_b">Było WOW</b></span>
+        </button>
+        <button class="foto-drop" onclick="toast('t_proto')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M9 6l1.2-2h3.6L15 6"/></svg>
+          <span><b data-t="foto_b">Dodaj zdjęcie</b><small data-t="foto_s">Jedno, najlepsze. Możesz też później.</small></span>
+        </button>
+      </div>
+      <div class="stopka-kroku">
+        <button class="btn cichy" onclick="stepTo(3)" data-t="wstecz">Wstecz</button>
+        <button class="btn pieczec" onclick="saveEntry()" data-t="zapisz">Przybij pieczątkę</button>
+      </div>
+    </div>
+
+    <div class="przybicie" id="przybicie">
+      <div class="fala"></div>
+      <div class="stempel" id="przybicie-stempel"></div>
+      <p data-t="zapisano">zapisane w dzienniku ✓</p>
+    </div>
+  </div>
+
+  <!-- ===================== DZIENNIK ===================== -->
+  <div class="screen" id="scr-dziennik">
+    <div class="lotniczy"></div>
+    <div class="top">
+      <span class="wordmark"><span class="znak">↩</span><span class="nazwa">BeBack</span></span>
+      <span class="kto" data-t="wpisow">14 wpisów</span>
+    </div>
+    <div class="dziennik-cialo">
+      <div class="miesiac"><b data-t="m_lip">Lipiec 2026</b><i></i><span data-t="str3">str. 3</span></div>
+      <button class="wpis-rzad" onclick="openEntryFromJournal(0)">
+        <span class="mini-stempel s-ziel">W<span class="wow-znak">★</span></span>
+        <span class="info"><b>Bistro Morskie Oko</b><small>Katowice · <span data-t="kat_jedzenie">Jedzenie</span></small>
+        <span class="chip-sync"><i></i><span data-t="sync">Czeka na wysłanie</span></span></span>
+        <span class="data">2 lip</span>
+      </button>
+      <div class="miesiac"><b data-t="m_maj">Maj 2026</b><i></i><span data-t="str2">str. 2</span></div>
+      <button class="wpis-rzad" onclick="openEntryFromJournal(2)">
+        <span class="mini-stempel s-ziel">W</span>
+        <span class="info"><b>Sztolnia Królowa Luiza</b><small>Zabrze · <span data-t="kat_atrakcja">Atrakcja</span></small></span>
+        <span class="data">9 maj</span>
+      </button>
+      <button class="wpis-rzad" onclick="openEntryFromJournal(3)">
+        <span class="mini-stempel s-czer">O</span>
+        <span class="info"><b>Karczma Złoty Kufel</b><small>Ustroń · <span data-t="kat_jedzenie">Jedzenie</span></small></span>
+        <span class="data">3 maj</span>
+      </button>
+      <div class="miesiac"><b data-t="m_mar">Marzec 2026</b><i></i><span data-t="str1">str. 1</span></div>
+      <button class="wpis-rzad" onclick="openEntryFromJournal(1)">
+        <span class="mini-stempel s-olo">M</span>
+        <span class="info"><b>Willa Halny</b><small>Wisła · <span data-t="kat_nocleg">Nocleg</span></small></span>
+        <span class="data">22 mar</span>
+      </button>
+    </div>
+    <nav class="nav">
+      <button onclick="go('mapa')">
+        <svg class="ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+        <span data-t="nav_mapa">Mapa</span>
+      </button>
+      <button class="fab" onclick="startAdd()" aria-label="+">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="on" onclick="go('dziennik')">
+        <svg class="ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h13a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M7 3v18M11 8h5M11 12h5"/></svg>
+        <span data-t="nav_dziennik">Dziennik</span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ---------------- i18n ---------------- */
+const T = {
+  pl: {
+    nav_mapa:'Mapa', nav_dziennik:'Dziennik', wpisow:'14 wpisów',
+    f_wszystko:'Wszystko', f_wroce:'Tylko „Wrócę"',
+    pryw_naglowek:'Notatka prywatna – widzisz tylko Ty', edytuj:'Edytuj', anuluj:'Anuluj',
+    k1_nr:'krok 1 · miejsce', k1_h:'Gdzie jesteś?', szukaj:'Szukaj miejsca…', w_poblizu:'W pobliżu (GPS)',
+    k1_tip:'dotknij – i lecimy dalej',
+    k2_nr:'krok 2 · kategoria', k2_tip:'jeden dotyk, bez „dalej"',
+    kat_nocleg:'Nocleg', kat_jedzenie:'Jedzenie', kat_atrakcja:'Atrakcja',
+    k3_nr:'krok 3 · werdykt', k3_h:'Twój werdykt?',
+    o_wroce:'Wrócę!', o_wroce_s:'Polecam bez wahania',
+    o_mozna:'Można', o_mozna_s:'W porządku, choć bez szału',
+    o_odradzam:'Odradzam', o_odradzam_s:'Szkoda czasu i pieniędzy',
+    wow_b:'Było WOW', wow_s:'Trafi na pieczątkę i wyróżni miejsce na mapie',
+    k4_nr:'krok 4 · opis', k4_h:'Najważniejsze, krótko', opis_ph:'Najważniejsze w 200 znakach…',
+    foto_b:'Dodaj zdjęcie', foto_s:'Jedno, najlepsze. Możesz też później.',
+    wstecz:'Wstecz', zapisz:'Przybij pieczątkę', zapisano:'zapisane w dzienniku ✓',
+    sync:'Czeka na wysłanie', m_lip:'Lipiec 2026', m_maj:'Maj 2026', m_mar:'Marzec 2026',
+    str1:'str. 1', str2:'str. 2', str3:'str. 3',
+    t_proto:'To makieta – funkcja pojawi się w MVP',
+    t_cluster:'Klaster: 7 wpisów w Kopenhadze – przybliż, by je rozdzielić',
+    brak_foto:'bez zdjęcia – dodasz później', foto_podpis:'nasze zdjęcie',
+    stamp_wroce:'WRÓCĘ', stamp_mozna:'MOŻNA', stamp_odradzam:'ODRADZAM'
+  },
+  en: {
+    nav_mapa:'Map', nav_dziennik:'Journal', wpisow:'14 entries',
+    f_wszystko:'All', f_wroce:'"Be back" only',
+    pryw_naglowek:'Private note – only you can see it', edytuj:'Edit', anuluj:'Cancel',
+    k1_nr:'step 1 · place', k1_h:'Where are you?', szukaj:'Search places…', w_poblizu:'Nearby (GPS)',
+    k1_tip:'one tap and off we go',
+    k2_nr:'step 2 · category', k2_tip:'one tap, no "next" needed',
+    kat_nocleg:'Stay', kat_jedzenie:'Food', kat_atrakcja:'Sight',
+    k3_nr:'step 3 · verdict', k3_h:'Your verdict?',
+    o_wroce:"I'll be back", o_wroce_s:'Recommended without hesitation',
+    o_mozna:"It's alright", o_mozna_s:'Fine, but nothing special',
+    o_odradzam:'Skip it', o_odradzam_s:'Not worth your time or money',
+    wow_b:'It was WOW', wow_s:'Goes on the stamp and marks the place on the map',
+    k4_nr:'step 4 · note', k4_h:'The essentials, briefly', opis_ph:'The essence in 200 characters…',
+    foto_b:'Add a photo', foto_s:'One, the best. You can also do it later.',
+    wstecz:'Back', zapisz:'Stamp it', zapisano:'stamped into your journal ✓',
+    sync:'Waiting to sync', m_lip:'July 2026', m_maj:'May 2026', m_mar:'March 2026',
+    str1:'p. 1', str2:'p. 2', str3:'p. 3',
+    t_proto:'Mockup only – this ships in the MVP',
+    t_cluster:'Cluster: 7 entries in Copenhagen – zoom in to split them',
+    brak_foto:'no photo yet – add it later', foto_podpis:'our photo',
+    stamp_wroce:'BE BACK', stamp_mozna:'ALRIGHT', stamp_odradzam:'SKIP IT'
+  }
+};
+let lang='pl';
+function t(k){return (T[lang][k]!==undefined)?T[lang][k]:k}
+function setLang(l){
+  lang=l;
+  document.getElementById('lang-pl').classList.toggle('on',l==='pl');
+  document.getElementById('lang-en').classList.toggle('on',l==='en');
+  document.querySelectorAll('[data-t]').forEach(el=>{el.textContent=t(el.dataset.t)});
+  document.querySelectorAll('[data-t-ph]').forEach(el=>{el.placeholder=t(el.dataset.tPh)});
+  if(openIdx!==null) fillEntry(openIdx);
+}
+
+/* ---------------- data ---------------- */
+const RATE_COLOR={wroce:'#3A6B4A',mozna:'#8A7E66',odradzam:'#B0342C'};
+const ENTRIES=[
+  {nazwa:'Bistro Morskie Oko', miejsce:'Katowice', kat:'kat_jedzenie', ocena:'wroce', wow:true,
+   opis:'Sandacz z pieca i obłędny chleb na zakwasie. Obsługa pamięta gości. Warto rezerwować na wieczór.',
+   pryw:'Stolik przy oknie, nr 4. Następnym razem deser z rabarbarem.',
+   data:'2 lipca 2026', foto:true},
+  {nazwa:'Willa Halny', miejsce:'Wisła', kat:'kat_nocleg', ocena:'mozna', wow:false,
+   opis:'Czysto, cicho, blisko wyciągu. Śniadanie niestety z paczki. Na jedną noc w zupełności wystarczy.',
+   pryw:'Pokój 12 ma balkon od strony lasu – prosić o niego.',
+   data:'22 marca 2026', foto:false},
+  {nazwa:'Sztolnia Królowa Luiza', miejsce:'Zabrze', kat:'kat_atrakcja', ocena:'wroce', wow:false,
+   opis:'Trzy godziny pod ziemią minęły jak kwadrans. Przewodnik z pasją. Rezerwujcie poranne wejścia.',
+   pryw:'Wziąć cieplejszą bluzę, na dole 10 stopni.',
+   data:'9 maja 2026', foto:true},
+  {nazwa:'Karczma Złoty Kufel', miejsce:'Ustroń', kat:'kat_jedzenie', ocena:'odradzam', wow:false,
+   opis:'Mrożonki w cenie kuchni autorskiej, obsługa znudzona. Widok ładny, ale to za mało.',
+   pryw:'',
+   data:'3 maja 2026', foto:false}
+];
+
+/* ---------------- stamp ---------------- */
+let arcId=0;
+function stampSVG(entry){
+  const c=RATE_COLOR[entry.ocena];
+  const word=t('stamp_'+entry.ocena);
+  const around=('BEBACK • '+entry.miejsce+' • BEBACK • '+entry.miejsce+' • ').toUpperCase();
+  const wow=entry.wow?'<circle cx="60" cy="60" r="57" fill="none" stroke="'+c+'" stroke-width="1.4" stroke-dasharray="3 4"/>':'';
+  arcId++;
+  return '<svg viewBox="0 0 120 120">'+
+    '<defs><path id="a'+arcId+'" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs>'+
+    wow+
+    '<circle cx="60" cy="60" r="52" fill="none" stroke="'+c+'" stroke-width="2.4"/>'+
+    '<circle cx="60" cy="60" r="34" fill="none" stroke="'+c+'" stroke-width="1.4"/>'+
+    '<text font-family="Karla,sans-serif" font-weight="700" font-size="9.5" letter-spacing="2.5" fill="'+c+'">'+
+      '<textPath href="#a'+arcId+'">'+around+'</textPath></text>'+
+    '<text x="60" y="57" text-anchor="middle" font-family="Domine,serif" font-weight="700" font-size="12.5" letter-spacing="1" fill="'+c+'">'+word+'</text>'+
+    (entry.wow?'<text x="60" y="45" text-anchor="middle" font-family="Karla,sans-serif" font-weight="700" font-size="8" letter-spacing="2" fill="'+c+'">★ WOW ★</text>':'')+
+    '<text x="60" y="73" text-anchor="middle" font-family="Karla,sans-serif" font-weight="700" font-size="8.5" letter-spacing="1" fill="'+c+'">'+entry.data.toUpperCase()+'</text>'+
+  '</svg>';
+}
+function fotoSVG(){
+  return '<svg viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice">'+
+    '<rect width="320" height="190" fill="#DCE4E0"/>'+
+    '<path d="M0,140 L70,70 L120,120 L180,50 L240,130 L320,80 L320,190 L0,190 Z" fill="#26324D" opacity=".82"/>'+
+    '<path d="M0,160 L90,110 L160,155 L250,100 L320,140 L320,190 L0,190 Z" fill="#3A6B4A" opacity=".55"/>'+
+    '<circle cx="252" cy="42" r="18" fill="#F7F1E2" opacity=".95"/>'+
+    '</svg>';
+}
+
+/* ---------------- navigation ---------------- */
+function go(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  document.getElementById(s==='mapa'?'scr-mapa':(s==='dziennik'?'scr-dziennik':'scr-add')).classList.add('active');
+  closeEntry();
+}
+function startAdd(){resetAdd();go('add');stepTo(1)}
+
+/* ---------------- map filter ---------------- */
+function setFilter(f){
+  document.getElementById('f-all').classList.toggle('on',f==='all');
+  document.getElementById('f-wroce').classList.toggle('on',f==='wroce');
+  document.querySelectorAll('.pin[data-o]').forEach(p=>{
+    p.style.display=(f==='all'||p.dataset.o==='wroce')?'':'none';
+  });
+}
+
+/* ---------------- entry sheet ---------------- */
+let openIdx=null;
+function openEntry(i){openIdx=i;fillEntry(i);
+  document.getElementById('zaslona').classList.add('on');
+  document.getElementById('karta').classList.add('on');
+}
+function openEntryFromJournal(i){go('mapa');setTimeout(()=>openEntry(i),80)}
+function fillEntry(i){
+  const e=ENTRIES[i];
+  document.getElementById('karta-nazwa').textContent=e.nazwa;
+  document.getElementById('karta-kat').textContent=t(e.kat)+' · '+e.miejsce;
+  document.getElementById('karta-opis').textContent=e.opis;
+  document.getElementById('karta-stempel').innerHTML=stampSVG(e);
+  document.getElementById('karta-meta').textContent=e.data;
+  const f=document.getElementById('karta-foto');
+  if(e.foto){
+    f.className='foto';
+    f.innerHTML='<span class="naroznik n1"></span><span class="naroznik n2"></span><span class="naroznik n3"></span><span class="naroznik n4"></span>'+fotoSVG()+'<span class="podpis-foto">'+t('foto_podpis')+'</span>';
+  }else{
+    f.className='foto pusta';
+    f.innerHTML=t('brak_foto');
+  }
+  const pr=document.getElementById('karta-pryw');
+  if(e.pryw){pr.style.display='flex';document.getElementById('karta-pryw-tekst').textContent=e.pryw}
+  else pr.style.display='none';
+}
+function closeEntry(){
+  openIdx=null;
+  document.getElementById('zaslona').classList.remove('on');
+  document.getElementById('karta').classList.remove('on');
+}
+
+/* ---------------- add flow (one-tap steps) ---------------- */
+let addState={};
+function resetAdd(){
+  addState={miejsce:null,lok:null,kat:null,ocena:null,wow:false};
+  document.querySelectorAll('#scr-add .kafel,#scr-add .ocena-btn,#wow').forEach(b=>b.classList.remove('on'));
+  document.getElementById('wow').classList.remove('widoczny');
+  document.getElementById('opis').value='';licz();
+  document.getElementById('przybicie').classList.remove('on','animuj');
+}
+function stepTo(n){
+  for(let i=1;i<=4;i++)document.getElementById('krok-'+i).style.display=(i===n?'flex':'none');
+  document.querySelectorAll('#krok-pas i').forEach((el,idx)=>el.classList.toggle('on',idx<n));
+}
+function pickPlace(nazwa,lok){
+  addState.miejsce=nazwa;addState.lok=lok;
+  document.getElementById('k2-nazwa').textContent=nazwa;
+  stepTo(2);
+}
+function pickCat(btn,kat){
+  addState.kat=kat;btn.classList.add('on');
+  setTimeout(()=>stepTo(3),160);   /* one tap → next step */
+}
+function pickRate(btn,o){
+  addState.ocena=o;btn.classList.add('on');
+  const wow=document.getElementById('wow');
+  if(o==='wroce')wow.classList.add('widoczny');
+  else{wow.classList.remove('widoczny','on');addState.wow=false}
+  setTimeout(()=>stepTo(4),160);   /* one tap → next step */
+}
+function toggleWow(){
+  addState.wow=!addState.wow;
+  document.getElementById('wow').classList.toggle('on',addState.wow);
+}
+function licz(){
+  const n=document.getElementById('opis').value.length;
+  const el=document.getElementById('licznik');
+  el.textContent=n;el.parentElement.classList.toggle('limit',n>=200);
+}
+function saveEntry(){
+  const today=new Date();
+  const mies=lang==='pl'
+    ?['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia']
+    :['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const nowy={nazwa:addState.miejsce||'—',miejsce:addState.lok||'Katowice',
+    ocena:addState.ocena||'wroce',wow:addState.wow,
+    data:today.getDate()+' '+mies[today.getMonth()]+' '+today.getFullYear()};
+  const p=document.getElementById('przybicie');
+  document.getElementById('przybicie-stempel').innerHTML=stampSVG(nowy);
+  p.classList.add('on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.classList.add('animuj')));
+  setTimeout(()=>{go('mapa')},1900);
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer;
+function toast(k){
+  const el=document.getElementById('toast');
+  el.textContent=t(k);el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('on'),2400);
+}
+
+setLang('pl');
+</script>
+</body>
+</html>
