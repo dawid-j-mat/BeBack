@@ -79,3 +79,19 @@ Podwójne poręczenie odpowiada modelowi zaufania apki.
 ## Faza budowy
 
 *(wpisy dodawane po każdej sesji: numer, decyzja, uzasadnienie, alternatywy)*
+
+**D-17 · TypeScript zamiast czystego JavaScriptu.** Kompilator wyłapuje całe klasy
+błędów (np. literówkę w nazwie pola wpisu) zanim apka się uruchomi – to będzie ważne
+przy modelu danych i logice offline w plastrach 2–7. Edytor podpowiada strukturę
+danych, co wspiera naukę. Koszt: trochę żargonu typów w kodzie. Odrzucone: czysty
+JavaScript (czytelniejszy na starcie, ale błędy typów ujawniałyby się dopiero
+w działaniu).
+
+**D-18 · Kafelki wektorowe z OpenFreeMap.** Papierowy styl mapy z `DESIGN.md` wymaga
+kafelków wektorowych (surowe dane, które kolorujemy sami), nie gotowych obrazków.
+OpenFreeMap serwuje wektorowe kafelki z danych OSM za darmo, bez klucza API i bez
+limitów – zero sekretów w repo i zero ryzyka rachunku. Odrzucone: MapTiler (konto,
+klucz, limit 100 tys. wczytań/mies.), rastrowe kafelki OSM (nie da się ich przemalować).
+Uwaga: etykiety na mapie tymczasowo w kroju Noto Sans – jedynym hostowanym przez
+OpenFreeMap; Domine/Karla na mapie wymagałyby własnego hostingu glyphów (do rozważenia
+w plastrze 8).
