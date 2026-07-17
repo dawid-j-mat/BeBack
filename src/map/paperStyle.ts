@@ -49,8 +49,9 @@ export const paperStyle: StyleSpecification = {
       source: 'openfreemap',
       'source-layer': 'water',
       paint: {
-        'fill-color': NIEBIESKI,
-        'fill-opacity': 0.14,
+        // Airmail blue at 14% over warm paper mixes into grey, so water
+        // uses a pre-mixed faded airmail blue that still reads as blue.
+        'fill-color': '#BCCEE6',
         'fill-outline-color': 'rgba(43, 76, 155, 0.5)',
       },
     },

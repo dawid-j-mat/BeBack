@@ -95,3 +95,10 @@ klucz, limit 100 tys. wczytań/mies.), rastrowe kafelki OSM (nie da się ich prz
 Uwaga: etykiety na mapie tymczasowo w kroju Noto Sans – jedynym hostowanym przez
 OpenFreeMap; Domine/Karla na mapie wymagałyby własnego hostingu glyphów (do rozważenia
 w plastrze 8).
+
+**D-19 · Kolor wody mieszany z góry, nie przezroczystością.** Prototypowy przepis
+„błękit lotniczy 14% krycia na papierze" daje na ekranie szarość (ciepły papier
+neutralizuje zimny błękit), co wyszło na realnych stawach Katowic. Woda dostaje
+gotowy, spłowiały błękit `#BCCEE6` (optycznie: błękit lotniczy rozbielony papierem),
+kontur bez zmian. Odrzucone: podbicie krycia do 30–40% (nadal szarawe), czysty
+jaskrawy błękit (wypada z estetyki papieru).
