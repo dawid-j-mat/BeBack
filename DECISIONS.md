@@ -102,3 +102,16 @@ neutralizuje zimny błękit), co wyszło na realnych stawach Katowic. Woda dosta
 gotowy, spłowiały błękit `#BCCEE6` (optycznie: błękit lotniczy rozbielony papierem),
 kontur bez zmian. Odrzucone: podbicie krycia do 30–40% (nadal szarawe), czysty
 jaskrawy błękit (wypada z estetyki papieru).
+
+**D-20 · Notatka prywatna w osobnej tabeli `private_notes`.** SPEC §6 umieszczał ją
+jako kolumnę `entries`, ale RLS Postgresa działa na poziomie wierszy, nie kolumn –
+nie da się pokazać komuś wiersza wpisu, ukrywając mu jedną kolumnę. Osobna tabela
+(notatka ↔ wpis 1:1, klucz obcy złożony wiąże notatkę z autorem wpisu) dostaje
+polityki „wszystko tylko autor", egzekwowane przez bazę, nie przez kod frontendu.
+Odrzucone: uprawnienia kolumnowe (łamią standardowe zapytania klienta Supabase),
+filtrowanie w frontendzie (do obejścia w konsoli przeglądarki).
+
+**D-21 · Wylogowanie przez dotknięcie podpisu w nagłówku (tymczasowe).** Dotknięcie
+odręcznego podpisu użytkownika pyta „Wylogować?". Zero nowych ekranów w MVP; potrzebne
+głównie do testów dwóch kont na jednym urządzeniu. Docelowe miejsce (ekran ustawień
+albo „Grono") – backlog.
