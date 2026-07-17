@@ -49,6 +49,105 @@
   font-size: 21px;
   letter-spacing: -0.01em;
 }
+.kto {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-reka);
+  font-size: 18px;
+  color: var(--atrament-70);
+  transform: rotate(-2deg);
+  padding: 8px;
+  min-height: 44px;
+}
+
+/* ---------- login ---------- */
+.logowanie {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.logowanie-cialo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  padding: 0 28px calc(60px + env(safe-area-inset-bottom));
+}
+.wordmark.duzy .znak {
+  width: 56px;
+  height: 56px;
+}
+.wordmark.duzy .znak svg {
+  width: 30px;
+  height: 30px;
+}
+.wordmark.duzy .nazwa {
+  font-size: 36px;
+}
+.logowanie-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.logowanie-form input {
+  border: 1px solid var(--atrament-45);
+  border-radius: var(--promien);
+  background: var(--bialy);
+  padding: 14px;
+  font-family: var(--font-tekst);
+  font-size: 15.5px;
+  color: var(--atrament);
+  box-shadow: inset 0 2px 4px rgba(38, 50, 77, 0.06);
+  min-height: 44px;
+}
+.logowanie-form input:focus {
+  outline: none;
+  border-color: var(--lotniczy-niebieski);
+}
+.btn {
+  border-radius: var(--promien);
+  padding: 16px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid var(--atrament);
+  transition: transform 0.12s;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.pieczec {
+  background: var(--lotniczy-czerwony);
+  border-color: var(--lotniczy-czerwony-cien);
+  color: var(--papier-jasny);
+  box-shadow: 0 3px 0 var(--lotniczy-czerwony-cien);
+}
+.btn.pieczec:active {
+  box-shadow: 0 1px 0 var(--lotniczy-czerwony-cien);
+}
+.btn.pieczec:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.logowanie-wyslano {
+  font-family: var(--font-reka);
+  font-size: 22px;
+  color: var(--atrament-70);
+  transform: rotate(-2deg);
+  text-align: center;
+}
+.logowanie-blad {
+  font-family: var(--font-tekst);
+  font-size: 13.5px;
+  color: var(--czerwien);
+  text-align: center;
+}
 
 /* ---------- map ---------- */
 .mapa-wrap {
