@@ -1,0 +1,32 @@
+/* Design tokens – source of truth: DESIGN.md + prototyp/beback-kierunek-2-dziennik.html */
+:root {
+  /* paper & ink */
+  --papier: #f1e8d4;
+  --papier-jasny: #f7f1e2;
+  --kraft: #e4d6b8;
+  --atrament: #26324d;
+  --atrament-70: rgba(38, 50, 77, 0.72);
+  --atrament-45: rgba(38, 50, 77, 0.45);
+  --atrament-20: rgba(38, 50, 77, 0.2);
+  --bialy: #fffdf7;
+
+  /* brand accents (airmail envelope) */
+  --lotniczy-czerwony: #c23a2e;
+  --lotniczy-czerwony-cien: #8e2a21;
+  --lotniczy-niebieski: #2b4c9b;
+
+  /* verdict semantics – meaning-only colors */
+  --zielen: #3a6b4a;
+  --olowek: #8a7e66;
+  --czerwien: #b0342c;
+  --zloto: #b8860b; /* WOW only – never anywhere else */
+
+  /* typography */
+  --font-serif: 'Domine', Georgia, serif;
+  --font-tekst: 'Karla', system-ui, sans-serif;
+  --font-reka: 'Caveat', cursive;
+
+  /* geometry */
+  --promien: 8px;
+  --cien-fizyczny: 0 2px 0 rgba(38, 50, 77, 0.12);
+}
