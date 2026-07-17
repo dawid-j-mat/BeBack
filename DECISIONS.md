@@ -56,7 +56,7 @@ opisu (widoczne tylko przy „Wrócę"), żeby auto-przejście go nie zjadało. 
 i „Paszportem" (za oszczędny). Pełne reguły w `DESIGN.md`. Wymóg dodatkowy: nie może
 wyglądać na „zrobione przez AI" – lista antywzorców w `DESIGN.md`.
 
-**D-13 · Znacznik WOW: złota pieczęć-nalepka.** Mały złoty sterysk przy pinezce.
+**D-13 · Znacznik WOW: złota pieczęć-nalepka.** Mały złoty asterysk przy pinezce i mini-stemplu.
 Złoto zarezerwowane w całej apce wyłącznie dla WOW.
 
 **D-14 · Zero didaskaliów.** Interfejs nie tłumaczy sam siebie; teksty typu
