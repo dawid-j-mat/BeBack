@@ -70,6 +70,10 @@ Treść wpisów nieprzetłumaczalna z zasady.
 zaproszeń (wyłącznie przez poręczenie istniejącego użytkownika) – dopiero po
 zweryfikowaniu nawyku.
 
+**D-16a · Zaproszenia z ratyfikacją.** Poręczenie znajomego nie wystarcza –
+konto powstaje dopiero po zatwierdzeniu przez administratora (Dawid).
+Podwójne poręczenie odpowiada modelowi zaufania apki.
+
 ---
 
 ## Faza budowy
