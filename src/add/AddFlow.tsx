@@ -33,11 +33,18 @@ export function AddFlow({ userId, onClose }: AddFlowProps) {
   }, []);
 
   async function findOrCreatePlace(candidate: PlaceCandidate): Promise<string> {
-    if (candidate.googlePlaceId) {
+    // Dedupe by whichever external id the candidate carries (Google or OSM);
+    // manual places have neither and always create a fresh row.
+    const externalId = candidate.googlePlaceId
+      ? { column: 'google_place_id', value: candidate.googlePlaceId }
+      : candidate.osmId
+        ? { column: 'osm_id', value: candidate.osmId }
+        : null;
+    if (externalId) {
       const { data } = await supabase
         .from('places')
         .select('id')
-        .eq('google_place_id', candidate.googlePlaceId)
+        .eq(externalId.column, externalId.value)
         .maybeSingle();
       if (data) return data.id as string;
     }
@@ -45,6 +52,7 @@ export function AddFlow({ userId, onClose }: AddFlowProps) {
       .from('places')
       .insert({
         google_place_id: candidate.googlePlaceId,
+        osm_id: candidate.osmId,
         name: candidate.name,
         city: candidate.city,
         country: candidate.country,

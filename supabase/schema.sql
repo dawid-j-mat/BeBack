@@ -52,6 +52,9 @@ create trigger on_auth_user_created
 create table public.places (
   id uuid primary key default gen_random_uuid(),
   google_place_id text unique,
+  -- OSM identity ("node/240109189") for places found via the free
+  -- Overpass/Photon provider (D-25); manual places leave both ids null
+  osm_id text unique,
   name text not null,
   city text,
   country text,

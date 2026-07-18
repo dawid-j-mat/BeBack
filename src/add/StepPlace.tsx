@@ -48,6 +48,7 @@ export function StepPlace({ position, onPick }: StepPlaceProps) {
     if (!name || !position) return;
     onPick({
       googlePlaceId: null,
+      osmId: null,
       name,
       city: null,
       country: null,
@@ -95,7 +96,7 @@ export function StepPlace({ position, onPick }: StepPlaceProps) {
 
         {list.map((p) => (
           <button
-            key={p.googlePlaceId ?? p.name}
+            key={p.googlePlaceId ?? p.osmId ?? p.name}
             type="button"
             className="miejsce"
             onClick={() => onPick(p)}
