@@ -11,6 +11,7 @@ export const dict = {
     login_wysylanie: 'Wysyłanie…',
     login_wyslano: 'Link poleciał – sprawdź pocztę',
     login_blad: 'Nie udało się wysłać linku – sprawdź adres',
+    login_link_wygasl: 'Link wygasł albo był już użyty – wyślij nowy',
     wyloguj_pytanie: 'Wylogować?',
   },
   en: {
@@ -23,6 +24,7 @@ export const dict = {
     login_wysylanie: 'Sending…',
     login_wyslano: 'Link is on its way – check your inbox',
     login_blad: 'Could not send the link – check the address',
+    login_link_wygasl: 'The link expired or was already used – send a new one',
     wyloguj_pytanie: 'Sign out?',
   },
 } as const satisfies Record<Lang, Record<string, string>>;

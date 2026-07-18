@@ -4,13 +4,27 @@ import { t } from '../i18n';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
+// Supabase reports magic-link failures (expired / already used link) by
+// redirecting back with error params in the URL hash. Read them once so the
+// login screen can say what happened instead of failing silently.
+function readLinkError(): string | null {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  if (!params.get('error')) return null;
+  history.replaceState(null, '', window.location.pathname);
+  return params.get('error_code') === 'otp_expired'
+    ? t('login_link_wygasl')
+    : (params.get('error_description') ?? t('login_blad'));
+}
+
 export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>('idle');
+  const [detail, setDetail] = useState<string | null>(() => readLinkError());
 
   async function sendLink(event: FormEvent) {
     event.preventDefault();
     setStatus('sending');
+    setDetail(null);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
@@ -19,7 +33,13 @@ export function LoginScreen() {
         shouldCreateUser: false,
       },
     });
-    setStatus(error ? 'error' : 'sent');
+    if (error) {
+      console.error('[beback] signInWithOtp error:', error.message);
+      setDetail(error.message);
+      setStatus('error');
+    } else {
+      setStatus('sent');
+    }
   }
 
   return (
@@ -59,6 +79,7 @@ export function LoginScreen() {
               {status === 'sending' ? t('login_wysylanie') : t('login_wyslij')}
             </button>
             {status === 'error' && <p className="logowanie-blad">{t('login_blad')}</p>}
+            {detail && <p className="logowanie-szczegol">{detail}</p>}
           </form>
         )}
       </div>
