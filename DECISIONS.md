@@ -134,3 +134,29 @@ tylko nazwę, współrzędne bierzemy z GPS, `google_place_id` zostaje puste (sc
 bazy od początku na to gotowy). Wymaga zgody na lokalizację – bez niej przycisk
 się nie pokazuje. Odrzucone: wskazywanie punktu na mapie (więcej dotknięć;
 ewentualnie backlog).
+
+**D-25 · Darmowy dostawca miejsc: Overpass + Photon, Google zostaje głównym.**
+Google Places jest darmowe przy dwóch kontach, ale przy większym gronie zaczęłoby
+kosztować – apka dostaje więc w pełni darmową, bezkluczową parę na danych OSM:
+Overpass API odpowiada na „W pobliżu" (obiekty wokół współrzędnych GPS), Photon
+(wyszukiwarka Komoot) na wpisywanie nazw, ze znoszeniem literówek. Na co dzień działa
+Google (lepsze dane o lokalach w Polsce, D-08); OSM włącza się automatycznie, gdy
+zapytanie Google zawiedzie albo klucza w ogóle nie ma, a zmienna `VITE_PLACES_PROVIDER`
+pozwala wymusić jedno źródło. Miejsca z OSM dostają w bazie własny identyfikator
+`osm_id` (obok `google_place_id`), żeby dwa wpisy w tej samej knajpie trafiały do
+jednego miejsca. Odrzucone: Nominatim (regulamin publicznej instancji zabrania
+podpowiedzi w trakcie pisania i ogranicza do 1 zapytania/s).
+
+**D-26 · Pinezki i klastry jako markery DOM + supercluster, nie warstwy MapLibre.**
+Wbudowane klastrowanie MapLibre rysuje teksty czcionkami kafelków – a tam mamy tylko
+Noto Sans (D-18), podczas gdy klaster wg DESIGN wymaga liczby w Domine i miasta
+w Caveat. Markery DOM dziedziczą fonty i CSS strony, więc szpilka i przerywane kółko
+klastra są wklejone 1:1 z prototypu; matematykę klastrów liczy biblioteka supercluster
+(wymieniona w SPEC §3.3). Przy setkach wpisów wydajność bez znaczenia. Odrzucone:
+warstwy symbolowe MapLibre (własny hosting glyphów i przerysowana szpilka).
+
+**D-27 · Jedna pinezka na miejsce, wpisy przełączane w karcie.** Dwoje użytkowników
+oceni te same lokale – osobne pinezki w tym samym punkcie by się przesłaniały. Wpisy
+grupują się po miejscu: główka szpilki ma kolor najnowszego werdyktu, złota nalepka
+WOW pojawia się, jeśli którykolwiek wpis ją ma, a karta wpisu przełącza strony
+strzałkami (licznik „1/2"). To przy okazji fundament pod „dwa-w-jednym" z plastra 8.
