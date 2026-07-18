@@ -1,18 +1,8 @@
-import type { GeoPosition } from './geolocation';
+import type { GeoPosition } from '../geolocation';
+import { distanceMeters, type PlaceCandidate } from './types';
 
 // Google Places API (New) called straight from the browser (D-22).
 // The key is public but restricted to our domains and to this API.
-
-export interface PlaceCandidate {
-  googlePlaceId: string | null;
-  name: string;
-  city: string | null;
-  country: string | null;
-  lat: number;
-  lng: number;
-  address: string | null;
-  distanceM: number | null;
-}
 
 interface GoogleAddressComponent {
   longText?: string;
@@ -29,6 +19,10 @@ interface GooglePlace {
 
 const FIELD_MASK =
   'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location';
+
+export function hasGoogleKey(): boolean {
+  return Boolean(import.meta.env.VITE_GOOGLE_PLACES_KEY);
+}
 
 async function callPlaces(path: string, body: unknown): Promise<GooglePlace[]> {
   const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
@@ -52,16 +46,6 @@ function component(place: GooglePlace, type: string): string | null {
   return hit?.longText ?? null;
 }
 
-export function distanceMeters(a: GeoPosition, b: GeoPosition): number {
-  const R = 6_371_000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return Math.round(2 * R * Math.asin(Math.sqrt(s)));
-}
-
 function toCandidate(place: GooglePlace, from: GeoPosition | null): PlaceCandidate | null {
   const lat = place.location?.latitude;
   const lng = place.location?.longitude;
@@ -69,6 +53,7 @@ function toCandidate(place: GooglePlace, from: GeoPosition | null): PlaceCandida
   if (lat === undefined || lng === undefined || !name) return null;
   return {
     googlePlaceId: place.id,
+    osmId: null,
     name,
     city: component(place, 'locality'),
     country: component(place, 'country'),
@@ -79,7 +64,7 @@ function toCandidate(place: GooglePlace, from: GeoPosition | null): PlaceCandida
   };
 }
 
-export async function searchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
+export async function googleSearchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
   const places = await callPlaces('places:searchNearby', {
     languageCode: 'pl',
     maxResultCount: 8,
@@ -93,7 +78,7 @@ export async function searchNearby(position: GeoPosition): Promise<PlaceCandidat
     .filter((p): p is PlaceCandidate => p !== null);
 }
 
-export async function searchText(
+export async function googleSearchText(
   query: string,
   bias: GeoPosition | null,
 ): Promise<PlaceCandidate[]> {

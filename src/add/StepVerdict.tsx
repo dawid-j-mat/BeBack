@@ -1,5 +1,5 @@
 import { t } from '../i18n';
-import type { Verdict } from '../components/Stamp';
+import type { Verdict } from '../lib/verdicts';
 
 interface StepVerdictProps {
   onPick: (verdict: Verdict) => void;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Stamp, type Verdict } from '../components/Stamp';
+import { Stamp } from '../components/Stamp';
+import type { Verdict } from '../lib/verdicts';
 import { t } from '../i18n';
 
 interface PrzybicieProps {

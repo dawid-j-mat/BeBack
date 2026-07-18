@@ -47,6 +47,12 @@ export const dict = {
     stamp_wroce: 'WRÓCĘ',
     stamp_mozna: 'MOŻNA',
     stamp_odradzam: 'ODRADZAM',
+    f_wszystko: 'Wszystko',
+    f_wroce: 'Tylko „Wrócę"',
+    pryw_naglowek: 'Notatka prywatna – widzisz tylko Ty',
+    zamknij: 'Zamknij',
+    dalej_aria: 'Następny wpis',
+    klaster_aria: 'Wpisy w okolicy',
   },
   en: {
     nav_mapa: 'Map',
@@ -94,6 +100,12 @@ export const dict = {
     stamp_wroce: 'BE BACK',
     stamp_mozna: 'ALRIGHT',
     stamp_odradzam: 'SKIP IT',
+    f_wszystko: 'All',
+    f_wroce: 'Only "I\'ll be back"',
+    pryw_naglowek: 'Private note – only you can see it',
+    zamknij: 'Close',
+    dalej_aria: 'Next entry',
+    klaster_aria: 'Entries around here',
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 
