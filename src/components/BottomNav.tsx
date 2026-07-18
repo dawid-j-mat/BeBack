@@ -1,8 +1,7 @@
 import { t } from '../i18n';
 
-// Map is the only working screen in slice 1; the journal button and the
-// stamp FAB come alive in slices 3 and 5.
-export function BottomNav() {
+// The journal button comes alive in slice 5.
+export function BottomNav({ onAdd }: { onAdd: () => void }) {
   return (
     <nav className="nav">
       <button type="button" className="on">
@@ -19,7 +18,7 @@ export function BottomNav() {
         </svg>
         <span>{t('nav_mapa')}</span>
       </button>
-      <button type="button" className="fab" aria-label={t('dodaj_wpis')}>
+      <button type="button" className="fab" aria-label={t('dodaj_wpis')} onClick={onAdd}>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
