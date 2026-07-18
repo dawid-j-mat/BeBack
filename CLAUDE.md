@@ -9,6 +9,7 @@ podróży + rekomendacje w zaufanym gronie) budowanej przez jedną osobę w woln
 2. `DESIGN.md` – jak to ma wyglądać; wizualnym źródłem prawdy jest
    `prototyp/beback-kierunek-2-dziennik.html`.
 3. `DECISIONS.md` – dlaczego tak; nie podważaj decyzji bez nowych argumentów.
+4. `STATUS.md` – stan prac i przekazanie między sesjami (aktualizuj na koniec sesji).
 
 Nie wychodź poza zakres MVP z `SPEC.md` bez wyraźnej decyzji użytkownika.
 

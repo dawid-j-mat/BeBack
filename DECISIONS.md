@@ -115,3 +115,22 @@ filtrowanie w frontendzie (do obejścia w konsoli przeglądarki).
 odręcznego podpisu użytkownika pyta „Wylogować?". Zero nowych ekranów w MVP; potrzebne
 głównie do testów dwóch kont na jednym urządzeniu. Docelowe miejsce (ekran ustawień
 albo „Grono") – backlog.
+
+**D-22 · Places API (New) przez REST prosto z przeglądarki.** Nowe API Google
+(places.googleapis.com/v1) obsługuje zapytania z przeglądarki kluczem ograniczonym
+do naszych domen i tego jednego API. Odrzucone: SDK map Google (ciężki, ciągnie
+własny renderer map – mamy MapLibre) i serwer pośredniczący (nie mamy backendu
+poza Supabase). Oszczędność kredytu: „W pobliżu" raz na otwarcie przepływu,
+wyszukiwarka z opóźnieniem 500 ms i od 3 znaków.
+
+**D-23 · Nawigacja stanem Reacta, bez biblioteki routingu.** Apka ma dwa ekrany
+(mapa + przepływ dodawania; dziennik dojdzie w plastrze 5) – wystarczy zmienna
+stanu. Odrzucone: react-router (zależność spoza SPEC §5 bez realnej potrzeby).
+
+**D-24 · Miejsce spoza Google – ręcznie, pinezka z pozycji GPS.** Nie każda budka
+z lodami jest w Google. Przycisk „Dodaj miejsce, w którym jestem" (przerywana
+ramka = obszar do wypełnienia, zgodnie z językiem DESIGN.md): użytkownik wpisuje
+tylko nazwę, współrzędne bierzemy z GPS, `google_place_id` zostaje puste (schemat
+bazy od początku na to gotowy). Wymaga zgody na lokalizację – bez niej przycisk
+się nie pokazuje. Odrzucone: wskazywanie punktu na mapie (więcej dotknięć;
+ewentualnie backlog).

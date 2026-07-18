@@ -1,0 +1,113 @@
+import type { GeoPosition } from './geolocation';
+
+// Google Places API (New) called straight from the browser (D-22).
+// The key is public but restricted to our domains and to this API.
+
+export interface PlaceCandidate {
+  googlePlaceId: string | null;
+  name: string;
+  city: string | null;
+  country: string | null;
+  lat: number;
+  lng: number;
+  address: string | null;
+  distanceM: number | null;
+}
+
+interface GoogleAddressComponent {
+  longText?: string;
+  types?: string[];
+}
+
+interface GooglePlace {
+  id: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  addressComponents?: GoogleAddressComponent[];
+  location?: { latitude?: number; longitude?: number };
+}
+
+const FIELD_MASK =
+  'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location';
+
+async function callPlaces(path: string, body: unknown): Promise<GooglePlace[]> {
+  const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
+  if (!key) throw new Error('Missing VITE_GOOGLE_PLACES_KEY - see .env.example');
+  const res = await fetch(`https://places.googleapis.com/v1/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': key,
+      'X-Goog-FieldMask': FIELD_MASK,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Places ${path} failed with ${res.status}`);
+  const json: { places?: GooglePlace[] } = await res.json();
+  return json.places ?? [];
+}
+
+function component(place: GooglePlace, type: string): string | null {
+  const hit = place.addressComponents?.find((c) => c.types?.includes(type));
+  return hit?.longText ?? null;
+}
+
+export function distanceMeters(a: GeoPosition, b: GeoPosition): number {
+  const R = 6_371_000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(s)));
+}
+
+function toCandidate(place: GooglePlace, from: GeoPosition | null): PlaceCandidate | null {
+  const lat = place.location?.latitude;
+  const lng = place.location?.longitude;
+  const name = place.displayName?.text;
+  if (lat === undefined || lng === undefined || !name) return null;
+  return {
+    googlePlaceId: place.id,
+    name,
+    city: component(place, 'locality'),
+    country: component(place, 'country'),
+    lat,
+    lng,
+    address: place.formattedAddress ?? null,
+    distanceM: from ? distanceMeters(from, { lat, lng }) : null,
+  };
+}
+
+export async function searchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
+  const places = await callPlaces('places:searchNearby', {
+    languageCode: 'pl',
+    maxResultCount: 8,
+    rankPreference: 'DISTANCE',
+    locationRestriction: {
+      circle: { center: { latitude: position.lat, longitude: position.lng }, radius: 400 },
+    },
+  });
+  return places
+    .map((p) => toCandidate(p, position))
+    .filter((p): p is PlaceCandidate => p !== null);
+}
+
+export async function searchText(
+  query: string,
+  bias: GeoPosition | null,
+): Promise<PlaceCandidate[]> {
+  const places = await callPlaces('places:searchText', {
+    textQuery: query,
+    languageCode: 'pl',
+    pageSize: 8,
+    ...(bias
+      ? {
+          locationBias: {
+            circle: { center: { latitude: bias.lat, longitude: bias.lng }, radius: 50_000 },
+          },
+        }
+      : {}),
+  });
+  return places.map((p) => toCandidate(p, bias)).filter((p): p is PlaceCandidate => p !== null);
+}
