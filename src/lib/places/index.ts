@@ -11,7 +11,21 @@ export { distanceMeters } from './types';
 
 type Provider = 'google' | 'osm';
 
+// Test command (D-28): opening the app with ?places=osm or ?places=google
+// pins the provider on this device (survives reloads); ?places=auto returns
+// to the default behaviour. No UI - this is a testing tool, not a feature.
+const OVERRIDE_KEY = 'beback:places-provider';
+
+const urlCommand = new URLSearchParams(window.location.search).get('places');
+if (urlCommand === 'osm' || urlCommand === 'google') {
+  localStorage.setItem(OVERRIDE_KEY, urlCommand);
+} else if (urlCommand === 'auto') {
+  localStorage.removeItem(OVERRIDE_KEY);
+}
+
 function pickProvider(): Provider {
+  const pinned = localStorage.getItem(OVERRIDE_KEY);
+  if (pinned === 'google' || pinned === 'osm') return pinned;
   const forced = import.meta.env.VITE_PLACES_PROVIDER;
   if (forced === 'google' || forced === 'osm') return forced;
   return hasGoogleKey() ? 'google' : 'osm';

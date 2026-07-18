@@ -54,8 +54,9 @@
 1. **Migracja bazy**: w Supabase SQL Editor uruchomić
    `supabase/migrations/2026-07_plaster4_osm_id.sql` (dodaje kolumnę
    `places.osm_id`; bez niej zapis miejsca znalezionego przez OSM się nie uda).
-2. (Opcjonalnie) przetestować darmowe źródło: w `.env.local` ustawić
-   `VITE_PLACES_PROVIDER=osm` i porównać wyniki „W pobliżu" z Google.
+2. (Opcjonalnie) przetestować darmowe źródło: otworzyć apkę z `?places=osm`
+   w adresie (D-28) i porównać wyniki „W pobliżu" z Google; `?places=auto`
+   przywraca automatykę.
 
 ## Znane sprawy / backlog techniczny
 
@@ -81,6 +82,10 @@
 Dziennik: chronologiczna lista wpisów grupowana miesiącami z mini-stemplami
 i znacznikiem WOW (`useEntries` z `src/lib/entries.ts` już zwraca komplet
 danych) + edycja wpisu, w tym oznaczanie zmiany werdyktu (`verdict_changed`).
+Feedback Dawida z odbioru plastra 4 – do ujęcia w edycji: **usuwanie własnego
+wpisu** (polityka RLS „delete own" już jest w bazie, brakuje tylko UI)
+i **dodawanie/edycja notatki prywatnej** (tabela `private_notes` gotowa od
+plastra 2; przepływ dodawania jej nie zbiera – edycja to naturalne miejsce).
 Do ponownego użycia: `Stamp`, `formatVisitDate`, karta wpisu (`EntryCard`).
 
 ## Stan odbioru

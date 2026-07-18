@@ -155,6 +155,14 @@ klastra są wklejone 1:1 z prototypu; matematykę klastrów liczy biblioteka sup
 (wymieniona w SPEC §3.3). Przy setkach wpisów wydajność bez znaczenia. Odrzucone:
 warstwy symbolowe MapLibre (własny hosting glyphów i przerysowana szpilka).
 
+**D-28 · Przełączanie źródła miejsc komendą w adresie, nie przyciskiem.** Do testów
+porównawczych Google ↔ OSM wystarczy raz otworzyć apkę z `?places=osm` (albo
+`?places=google`); wybór zapamiętuje się na urządzeniu, `?places=auto` przywraca
+automatykę z D-25. Odrzucone: widoczny przełącznik w interfejsie (MVP nie ma ekranu
+ustawień, a element techniczny na mapie łamałby czystość interfejsu) i sama zmienna
+środowiskowa (wymaga redeployu albo lokalnego środowiska – za daleko od „jednego
+przycisku" przy testach na produkcji).
+
 **D-27 · Jedna pinezka na miejsce, wpisy przełączane w karcie.** Dwoje użytkowników
 oceni te same lokale – osobne pinezki w tym samym punkcie by się przesłaniały. Wpisy
 grupują się po miejscu: główka szpilki ma kolor najnowszego werdyktu, złota nalepka
