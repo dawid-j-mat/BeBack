@@ -1,13 +1,6 @@
 import { useId } from 'react';
 import { t } from '../i18n';
-
-export type Verdict = 'wroce' | 'mozna' | 'odradzam';
-
-const VERDICT_COLOR: Record<Verdict, string> = {
-  wroce: '#3A6B4A',
-  mozna: '#8A7E66',
-  odradzam: '#B0342C',
-};
+import { VERDICT_COLOR, type Verdict } from '../lib/verdicts';
 
 const VERDICT_WORD: Record<Verdict, 'stamp_wroce' | 'stamp_mozna' | 'stamp_odradzam'> = {
   wroce: 'stamp_wroce',

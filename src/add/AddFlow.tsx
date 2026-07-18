@@ -9,14 +9,15 @@ import { StepCategory, type Category } from './StepCategory';
 import { StepVerdict } from './StepVerdict';
 import { StepNote } from './StepNote';
 import { Przybicie } from './Przybicie';
-import type { Verdict } from '../components/Stamp';
+import type { Verdict } from '../lib/verdicts';
 
 interface AddFlowProps {
   userId: string;
   onClose: () => void;
+  onSaved?: (entryId: string) => void;
 }
 
-export function AddFlow({ userId, onClose }: AddFlowProps) {
+export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
   const [step, setStep] = useState(1);
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [place, setPlace] = useState<PlaceCandidate | null>(null);
@@ -72,16 +73,21 @@ export function AddFlow({ userId, onClose }: AddFlowProps) {
     setError(false);
     try {
       const placeId = await findOrCreatePlace(place);
-      const { error: entryError } = await supabase.from('entries').insert({
-        user_id: userId,
-        place_id: placeId,
-        category,
-        verdict,
-        wow,
-        note: note.trim(),
-      });
+      const { data: entryData, error: entryError } = await supabase
+        .from('entries')
+        .insert({
+          user_id: userId,
+          place_id: placeId,
+          category,
+          verdict,
+          wow,
+          note: note.trim(),
+        })
+        .select('id')
+        .single();
       if (entryError) throw entryError;
       setStamped(true);
+      onSaved?.(entryData.id as string);
     } catch (err) {
       console.error('[beback] entry save failed:', err);
       setError(true);
