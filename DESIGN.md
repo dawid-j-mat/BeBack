@@ -76,8 +76,10 @@ Caveat nigdy do treści wpisów ani elementów wymagających szybkiego czytania.
 ## 4. Mapa (styl MapLibre)
 
 Papierowe tło (`--papier`), drogi jako szkicowe linie atramentu o niskim kryciu,
-woda błękit lotniczy 14% z konturem, wzgórza jako doodle „^", czerwony szlak
-kropkowany. Pinezki = szpilki (główka koło w kolorze werdyktu + cień + nóżka).
+woda: spłowiały błękit lotniczy `#BCCEE6` z konturem błękitu 50% (przepis „błękit
+14% krycia" z prototypu na ciepłym papierze neutralizuje się do szarości – kolor
+wody mieszamy z góry, nie przezroczystością), wzgórza jako doodle „^", czerwony
+szlak kropkowany. Pinezki = szpilki (główka koło w kolorze werdyktu + cień + nóżka).
 Klastry = przerywane kółko z liczbą (Domine) i nazwą miasta (Caveat).
 Docelowo: własny JSON stylu MapLibre odwzorowujący te zasady na realnych kafelkach.
 
