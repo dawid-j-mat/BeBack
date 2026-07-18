@@ -1,0 +1,160 @@
+/* Entry card - a journal page sliding up over the map (prototype: .karta). */
+
+.zaslona {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  background: rgba(32, 41, 62, 0.45);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  animation: zaslona-in 0.25s ease;
+}
+@keyframes zaslona-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.karta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  margin-inline: auto;
+  width: min(calc(100% - 20px), 460px);
+  z-index: 9;
+  background: var(--papier-jasny);
+  border: 1px solid var(--atrament-20);
+  border-radius: 10px;
+  transform: rotate(0.6deg);
+  max-height: 82%;
+  overflow-y: auto;
+  box-shadow: 0 -14px 40px rgba(32, 41, 62, 0.35);
+  animation: karta-in 0.34s cubic-bezier(0.3, 0.9, 0.35, 1);
+}
+@keyframes karta-in {
+  from {
+    transform: translateY(110%) rotate(0.6deg);
+  }
+}
+
+.karta-wnetrze {
+  padding: 22px 20px;
+  position: relative;
+}
+.tasma {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 110px;
+  height: 22px;
+  background: rgba(214, 196, 150, 0.85);
+  border: 1px solid rgba(38, 50, 77, 0.12);
+  box-shadow: 0 1px 3px rgba(38, 50, 77, 0.15);
+  z-index: 10;
+}
+.karta .stempel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 80px;
+  height: 80px;
+  transform: rotate(8deg);
+}
+.karta h2 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 23px;
+  line-height: 1.15;
+  max-width: 75%;
+}
+.kat-linia {
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lotniczy-niebieski);
+  margin: 4px 0 10px;
+}
+.kartki {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.kartki button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--atrament-70);
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+}
+.kartki span {
+  font-family: var(--font-reka);
+  font-size: 17px;
+  color: var(--atrament-70);
+}
+.karta .opis {
+  font-size: 15.5px;
+  line-height: 1.6;
+  border-top: 1px dashed var(--atrament-45);
+  padding-top: 10px;
+}
+.prywatna {
+  margin-top: 14px;
+  border: 1px dashed var(--atrament-45);
+  border-radius: 8px;
+  background: var(--papier);
+  padding: 11px 13px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.prywatna svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--atrament-70);
+}
+.prywatna b {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--atrament-70);
+  margin-bottom: 2px;
+}
+.prywatna p {
+  font-family: var(--font-reka);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--atrament-70);
+}
+.meta-linia {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.meta-linia .data-reka {
+  font-family: var(--font-reka);
+  font-size: 17px;
+  color: var(--atrament-70);
+  transform: rotate(-1deg);
+}
+.meta-linia .podpis-reka {
+  font-family: var(--font-reka);
+  font-size: 18px;
+  color: var(--atrament-70);
+  transform: rotate(-2deg);
+}

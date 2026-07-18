@@ -200,6 +200,96 @@
 .mapa .maplibregl-ctrl-attrib a {
   color: var(--atrament-70);
 }
+.filtry {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.filtr {
+  pointer-events: auto;
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  background: var(--bialy);
+  border: 1px solid var(--atrament-45);
+  color: var(--atrament);
+  border-radius: 6px;
+  padding: 7px 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
+  min-height: 44px;
+}
+.filtr.on {
+  background: var(--atrament);
+  color: var(--papier-jasny);
+  border-color: var(--atrament);
+}
+
+/* entry pins and clusters (DOM markers, D-26) */
+.pinezka {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  width: 48px;
+  height: 42px;
+  transition: transform 0.18s ease;
+}
+.pinezka:hover {
+  transform: translateY(-2px);
+}
+.pinezka svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.pinezka.swieza .glowka {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pinezka-puls 1.4s ease-in-out 6;
+}
+@keyframes pinezka-puls {
+  50% {
+    transform: scale(1.3);
+  }
+}
+.klaster {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.klaster .ile {
+  width: 40px;
+  height: 40px;
+  border: 1.6px dashed var(--atrament);
+  border-radius: 50%;
+  background: var(--bialy);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--atrament);
+}
+.klaster .miasto {
+  font-family: var(--font-reka);
+  font-size: 16px;
+  color: var(--atrament);
+  opacity: 0.7;
+}
 
 /* ---------- bottom nav ---------- */
 .nav {
