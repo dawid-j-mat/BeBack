@@ -249,3 +249,41 @@ treść główną, a od drugiego otwarcia i tak ładuje się z precache. Kompres
 dostała awaryjną ścieżkę na canvasie na wypadek, gdyby leniwie ładowana biblioteka
 nie zdążyła trafić do precache przed utratą sieci – zdjęcia muszą działać offline
 bezwarunkowo (SPEC §3.5).
+
+**D-36 · Podpowiedzi „W pobliżu": siatki bezpieczeństwa i jawny stan błędu.**
+Awaria dostawcy wyglądała na ekranie identycznie jak „nic tu nie ma" – stąd
+zgłoszenie „podpowiedzi zniknęły" bez żadnego śladu w interfejsie. Cztery
+zmiany naraz: (1) krok miejsca odróżnia pusty wynik od błędu pobrania i przy
+błędzie pokazuje dyskretną linię z przyciskiem „Spróbuj ponownie"; (2) pozycja
+ma trzy siatki – dokładny odczyt, potem przybliżony (lokalizacja sieciowa),
+na końcu ostatnia zapamiętana pozycja (max 1 h – starsza mogłaby podpowiadać
+miejsca z miasta, z którego już wyjechaliśmy); (3) Overpass dostał zapasowy
+mirror kumi.systems (publiczna instancja bywa przeciążona); (4) promień
+400 m → 1000 m z limitem 10 wyników – w zwykłej dzielnicy mieszkaniowej
+400 m bywa puste z definicji, a wyniki i tak sortują się od najbliższego.
+Odrzucone: tekst tłumaczący, skąd biorą się podpowiedzi (didaskalia – zakaz
+z DESIGN; pokazujemy wyłącznie stan i akcję ponowienia).
+
+**D-37 · Język interfejsu z profilu, przełączany w arkuszu podpisu.** Język
+startuje z kopii na urządzeniu (apka otwiera się we właściwym języku także
+offline), a po zalogowaniu nadrzędny jest profil (`profiles.lang` istniało od
+plastra 2 – zero migracji); zmiana zapisuje się i lokalnie, i w profilu, więc
+wybór podąża za kontem na inne urządzenia. Miejsce zmiany: dotknięcie podpisu
+w nagłówku otwiera mały arkusz (Polski/English + Wyloguj) – naturalne
+rozwinięcie D-21, nadal bez osobnego ekranu ustawień. Wylogowanie zachowuje
+pytanie kontrolne, bo logowanie magic linkiem jest limitowane (2 maile/h).
+Odrzucone: ekran ustawień (MVP go nie ma) i biblioteka i18n (słownik z
+plastra 1 wystarcza).
+
+**D-38 · „To samo miejsce?" – dopasowanie po odległości, rozstrzyga
+użytkownik.** Wybór miejsca oddalonego do 50 m od miejsca już zapisanego na
+serwerze: przy identycznej nazwie wpis podpina się do niego bez pytania (to
+ten sam lokal, np. wybrany raz z Google, raz z OSM), przy różnej nazwie apka
+pyta „To samo miejsce co «X»?" – tak działa scenariusz „restauracja w hotelu"
+(D-05): dwa wpisy, jedna pinezka z przełączanymi kartami (D-27). Wybrane
+powiązanie wędruje przez skrytkę offline (pole `existingPlaceId`), więc
+synchronizacja podpina wpis do istniejącego wiersza zamiast tworzyć duplikat,
+a pinezka scala się od razu, jeszcze przed wysłaniem. Odrzucone: automatyczne
+łączenie po samej odległości (hotel obok kawiarni to nie to samo miejsce –
+o tożsamości decyduje człowiek) i większy promień (na gęstej ulicy pytanie
+padałoby przy co drugim dodaniu).

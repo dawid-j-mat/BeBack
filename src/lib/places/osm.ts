@@ -1,15 +1,19 @@
 import type { GeoPosition } from '../geolocation';
-import { distanceMeters, type PlaceCandidate } from './types';
+import { distanceMeters, NEARBY_LIMIT, NEARBY_RADIUS_M, type PlaceCandidate } from './types';
 
 // Free, keyless place search on OpenStreetMap data (D-25).
 // "Nearby" asks the Overpass API for named POIs around the GPS position;
 // text search goes to Photon, komoot's typo-tolerant geocoder.
 
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+// The main public instance gets overloaded at times, so nearby falls
+// through to the kumi.systems mirror before giving up.
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
 const PHOTON_URL = 'https://photon.komoot.io/api';
 // Public instances can be busy; the place step must never hang.
 const TIMEOUT_MS = 6000;
-const RESULT_LIMIT = 8;
 
 // OSM tag values covering our three categories (SPEC §3.1):
 // jedzenie via amenity, nocleg and atrakcja via tourism plus a few leisure spots.
@@ -55,24 +59,34 @@ function toNearbyCandidate(el: OverpassElement, from: GeoPosition): PlaceCandida
 }
 
 export async function osmSearchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
-  const around = `around:400,${position.lat},${position.lng}`;
+  const around = `around:${NEARBY_RADIUS_M},${position.lat},${position.lng}`;
+  // Overpass returns elements in no particular order, so the cap has to be
+  // generous - sorting by distance and trimming happens client-side.
   const query = `[out:json][timeout:6];
 (
   nwr(${around})[name][amenity~"^(${AMENITY})$"];
   nwr(${around})[name][tourism~"^(${TOURISM})$"];
   nwr(${around})[name][leisure~"^(${LEISURE})$"];
 );
-out center tags 30;`;
-  const json = (await fetchJson(OVERPASS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`,
-  })) as { elements?: OverpassElement[] };
-  return (json.elements ?? [])
-    .map((el) => toNearbyCandidate(el, position))
-    .filter((c): c is PlaceCandidate => c !== null)
-    .sort((a, b) => (a.distanceM ?? 0) - (b.distanceM ?? 0))
-    .slice(0, RESULT_LIMIT);
+out center tags 60;`;
+  let lastError: unknown = new Error('No Overpass instance configured');
+  for (const url of OVERPASS_URLS) {
+    try {
+      const json = (await fetchJson(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+      })) as { elements?: OverpassElement[] };
+      return (json.elements ?? [])
+        .map((el) => toNearbyCandidate(el, position))
+        .filter((c): c is PlaceCandidate => c !== null)
+        .sort((a, b) => (a.distanceM ?? 0) - (b.distanceM ?? 0))
+        .slice(0, NEARBY_LIMIT);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 interface PhotonFeature {
@@ -114,7 +128,7 @@ export async function osmSearchText(
   query: string,
   bias: GeoPosition | null,
 ): Promise<PlaceCandidate[]> {
-  const params = new URLSearchParams({ q: query, limit: String(RESULT_LIMIT) });
+  const params = new URLSearchParams({ q: query, limit: String(NEARBY_LIMIT) });
   if (bias) {
     params.set('lat', String(bias.lat));
     params.set('lon', String(bias.lng));

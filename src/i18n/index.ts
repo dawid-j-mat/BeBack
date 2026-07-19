@@ -1,8 +1,34 @@
 import { dict, type DictKey, type Lang } from './dict';
 
-// Language will come from the user profile in a later slice; until then we
-// follow the browser, defaulting to Polish.
-const lang: Lang = navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'pl';
+export type { Lang };
+
+// The language starts from the device copy (so the app opens in the right
+// language even offline), falls back to the browser and is overridden by
+// the profile after sign-in (SPEC §3.6). Callers re-render via App state -
+// this module only holds the current value.
+const LANG_KEY = 'beback:lang';
+
+function initialLang(): Lang {
+  try {
+    const stored = localStorage.getItem(LANG_KEY);
+    if (stored === 'pl' || stored === 'en') return stored;
+  } catch {
+    // no storage - fall through to the browser language
+  }
+  return navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'pl';
+}
+
+let lang: Lang = initialLang();
+
+export function setLang(next: Lang): void {
+  lang = next;
+  document.documentElement.lang = next;
+  try {
+    localStorage.setItem(LANG_KEY, next);
+  } catch {
+    // best-effort device copy
+  }
+}
 
 export function t(key: DictKey): string {
   return dict[lang][key];

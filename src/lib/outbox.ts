@@ -12,6 +12,10 @@ import type { Entry } from './entries';
 export interface PendingEntry {
   entryId: string; // becomes entries.id on the server
   placeId: string; // used only if the place does not exist yet
+  // Set when the user linked the entry to a place that already exists on the
+  // server ("same place?", SPEC §3.1) - sync attaches to it instead of
+  // creating a new row. Optional: items queued by older builds lack it.
+  existingPlaceId?: string | null;
   userId: string;
   authorName: string;
   place: PlaceCandidate;
@@ -93,9 +97,10 @@ export function pendingToEntry(item: PendingEntry, photoUrl: string | null): Ent
     pending: true,
     pendingPhotoUrl: photoUrl,
     place: {
-      // Group offline entries at one venue onto one pin (D-27): the external
-      // id is shared across candidates, the generated uuid is the fallback.
-      id: item.place.googlePlaceId ?? item.place.osmId ?? item.placeId,
+      // Group offline entries at one venue onto one pin (D-27): a linked
+      // server place merges with its pin immediately, otherwise the external
+      // id is shared across candidates and the generated uuid is the fallback.
+      id: item.existingPlaceId ?? item.place.googlePlaceId ?? item.place.osmId ?? item.placeId,
       name: item.place.name,
       city: item.place.city,
       country: item.place.country,

@@ -1,5 +1,11 @@
 import type { GeoPosition } from '../geolocation';
 
+// Shared by both providers. 1000 m instead of the original 400 m: results
+// are sorted by distance and show it anyway, and the smaller circle came up
+// empty in ordinary residential areas.
+export const NEARBY_RADIUS_M = 1000;
+export const NEARBY_LIMIT = 10;
+
 // One shape for a place regardless of where it came from (Google, OSM or
 // the manual "place I am at" button). Exactly one of googlePlaceId / osmId
 // is set for provider results; both stay null for manual places.

@@ -18,6 +18,8 @@ import {
 const DUPLICATE = '23505'; // Postgres unique_violation
 
 async function findOrCreatePlace(item: PendingEntry): Promise<string> {
+  // The user already answered "same place?" while adding - trust the link.
+  if (item.existingPlaceId) return item.existingPlaceId;
   const candidate = item.place;
   // Dedupe by whichever external id the candidate carries (Google or OSM);
   // manual places have neither and always create a fresh row.

@@ -111,6 +111,18 @@
     opacity: 0.35;
   }
 }
+/* nearby fetch failed – an honest state instead of a silent nothing */
+.poblizu-blad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-tekst);
+  font-size: 13px;
+  color: var(--atrament-70);
+  margin: 6px 2px 0;
+}
+
 .miejsce {
   display: flex;
   align-items: center;
@@ -433,6 +445,54 @@
 }
 .stopka-kroku .btn.pieczec {
   flex: 1;
+}
+
+/* "same place?" link question (SPEC §3.1) */
+.laczenie-tlo {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(38, 50, 77, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+}
+.laczenie {
+  background: var(--papier-jasny);
+  border: 1px solid var(--atrament-45);
+  border-radius: 10px;
+  box-shadow: 0 3px 0 rgba(38, 50, 77, 0.2);
+  padding: 20px;
+  width: 100%;
+  max-width: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: wjazd 0.25s ease;
+}
+.laczenie p {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.laczenie-przyciski {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.laczenie-przyciski .btn {
+  width: 100%;
+}
+.laczenie-tak {
+  background: var(--atrament);
+  border-color: var(--atrament);
+  color: var(--papier-jasny);
+  box-shadow: 0 3px 0 rgba(38, 50, 77, 0.35);
+}
+.laczenie-tak:active {
+  box-shadow: 0 1px 0 rgba(38, 50, 77, 0.35);
 }
 
 /* stamp-thud animation */
