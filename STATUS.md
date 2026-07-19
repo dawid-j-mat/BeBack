@@ -141,6 +141,35 @@
   gdyby kiedyś było ciasno, pierwszy ruch to `MAX_EDGE` 1920 → 1600
   w `src/lib/photo.ts`, nie niższy próg KB.
 
+## Zrobione (sesja 6, lipiec 2026)
+
+- **Naprawa podpowiedzi „W pobliżu"** (D-36) – zgłoszenie: podpowiedzi
+  przestały się pojawiać na komputerze i telefonie, choć wyszukiwarka
+  działała. Przyczyna systemowa: awaria dostawcy była niema (wyglądała jak
+  brak miejsc w okolicy). Zmiany: krok miejsca pokazuje przy błędzie
+  dyskretną linię „Nie udało się pobrać miejsc w pobliżu" + „Spróbuj
+  ponownie"; pozycja z trzema siatkami (dokładna → przybliżona → ostatnia
+  zapamiętana, max 1 h, `src/lib/geolocation.ts`); Overpass z mirrorem
+  kumi.systems (backlogowy punkt domknięty); promień 400 m → 1000 m,
+  limit 10 (`NEARBY_RADIUS_M`/`NEARBY_LIMIT` w `src/lib/places/types.ts`).
+- **Plaster 8**:
+  - **Język z profilu** (D-37): start z kopii na urządzeniu
+    (`beback:lang`), po zalogowaniu nadrzędny `profiles.lang`
+    (istniało od plastra 2 – zero migracji); zmiana w arkuszu podpisu
+    (dotknięcie podpisu: Polski/English + Wyloguj, `src/components/
+    TopBar.tsx`); `useDisplayName` → `useProfile` (`src/auth/useProfile.ts`).
+  - **Powiązywanie wpisów „to samo miejsce?"** (D-38): wybór miejsca
+    ≤ 50 m od miejsca z serwera – identyczna nazwa podpina się cicho,
+    inna nazwa pyta dialogiem; powiązanie wędruje przez skrytkę
+    (`existingPlaceId` w `src/lib/outbox.ts`), sync podpina wpis do
+    istniejącego wiersza (`src/lib/sync.ts`), pinezka scala się od razu.
+    Scenariusz „restauracja w hotelu" (D-05) działa końcem do końca.
+  - **Szlif**: sprzeczność „filtr nieaktywny" rozstrzygnięta na rzecz
+    prototypu (ciągła ramka, poprawiony DESIGN.md); audyt animacji –
+    wszystkie animacje prototypu były już w apce, globalna reguła
+    `prefers-reduced-motion` w `base.css` obejmuje też nowe elementy.
+  - **Zero migracji bazy i zmian w RLS.**
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -153,19 +182,12 @@
   VITE_PLACES_PROVIDER (google|osm; puste = automatyka z D-25).
 - Praca przebiega przez PR-y na gałęzi roboczej → merge do `main` → autodeploy.
 
-## Do zrobienia ręcznie przed odbiorem plastra 6
+## Do zrobienia ręcznie
 
-1. **Kubełek zdjęć**: w Supabase SQL Editor uruchomić
-   `supabase/migrations/2026-07_plaster6_photos.sql` (tworzy prywatny kubełek
-   `photos` + reguły RLS Storage). Instrukcja krok po kroku: `docs/photos.md`.
-   Bez tego uploady zdjęć się nie udadzą (wpis zapisze się bez zdjęcia).
-
-Zaległe z wcześniejszych plastrów (jeśli jeszcze nierobione):
-
-2. **Migracja bazy plastra 4**: `supabase/migrations/2026-07_plaster4_osm_id.sql`
-   (kolumna `places.osm_id`; bez niej zapis miejsca z OSM się nie uda).
-3. (Opcjonalnie) darmowe źródło miejsc: otworzyć apkę z `?places=osm` (D-28)
-   i porównać „W pobliżu" z Google; `?places=auto` przywraca automatykę.
+Plaster 8 nie wymaga żadnych kroków ręcznych (zero migracji bazy).
+Uwaga przy odbiorze: jeśli któreś urządzenie ma przypięte źródło miejsc
+komendą `?places=` (D-28), przypięcie nadal obowiązuje – `?places=auto`
+przywraca automatykę (Google z zapasem OSM).
 
 ## Znane sprawy / backlog techniczny
 
@@ -180,39 +202,39 @@ Zaległe z wcześniejszych plastrów (jeśli jeszcze nierobione):
   zakres SPEC §3.5); przy braku zasięgu edycja kończy się dzisiejszym
   toastem błędu. Ewentualne rozszerzenie kolejki o edycje – backlog.
 - Publiczne serwery Overpass/Photon bywają obciążone – zapytania mają timeout
-  6 s; gdyby to przeszkadzało w praktyce, rozważyć mirror Overpass
-  (kumi.systems) jako drugi adres. Offline „W pobliżu" nie działa (to sieć),
-  ale ścieżka „Dodaj miejsce, w którym jestem" (GPS) działa bez zasięgu.
-- DESIGN §2 wymienia „filtr nieaktywny" wśród elementów z przerywaną ramką,
-  ale prototyp rysuje filtr ciągłą – zrobione wg prototypu (źródło prawdy);
-  wyjaśnić z Dawidem przy szlifie w plastrze 8.
+  6 s; „W pobliżu" próbuje kolejno overpass-api.de i mirrora kumi.systems
+  (od sesji 6, D-36). Offline „W pobliżu" nie działa (to sieć), ale ścieżka
+  „Dodaj miejsce, w którym jestem" (GPS) działa bez zasięgu.
+- **Przełącznik Google/OSM sterowany przez administratora z apki** – prośba
+  Dawida z sesji 6, do wdrożenia w plastrze 9. Szkic: tabela `app_settings`
+  (jeden wiersz, kolumna `places_provider: auto|google|osm`), RLS: odczyt
+  dla zalogowanych, zapis tylko dla konta admina (pilnuje baza, nie
+  frontend); apka czyta ustawienie przy starcie (z kopią w localStorage na
+  offline), przełączanie w arkuszu podpisu widoczne tylko dla admina.
+  Komenda `?places=` (D-28) zostaje jako narzędzie testowe per urządzenie.
 
-## Następny krok: plaster 8 (nowa sesja)
+## Następny krok: plaster 9 (nowa sesja)
 
-Dwujęzyczność z profilu użytkownika (dziś język idzie za przeglądarką;
-słownik PL/EN jest kompletny od plastra 1), powiązywanie wpisów w tym samym
-miejscu („to samo miejsce?" przy dodawaniu – fundament z D-27 już stoi)
-i szlif animacji. Do rozstrzygnięcia przy okazji: glyphy Domine/Karla na
-mapie i sprawa „filtra nieaktywnego" (punkty z backlogu wyżej).
-Przed plastrem 8: tydzień testów na spacerach po Katowicach (SPEC §7) –
-w tym test trybu samolotowego z plastra 7.
+Plastry 1–8 = pełny zakres MVP z SPEC §7. Przed wyjazdem: tydzień testów
+na spacerach (SPEC §7), w tym tryb samolotowy. Plaster 9 (pierwszy poza
+MVP, za zgodą Dawida): przełącznik dostawcy miejsc dla administratora
+(szkic w backlogu wyżej). W kolejce dalej: glyphy Domine/Karla na mapie
+(backlog wyżej) i backlog produktowy z SPEC §4.
 
 ## Stan odbioru
 
-Plastry 1–2 odebrane przez Dawida na produkcji. Plaster 3 czeka na odbiór:
-wymaga klucza Google Places (docs/google-places.md) w Vercelu i `.env.local`.
-Plaster 4 czeka na odbiór: wymaga migracji `osm_id` (punkt wyżej); weryfikacja
-wizualna zrobiona na danych zaślepkowych w Chromium (pinezki, klastry, karta,
-filtr, RLS notatki po stronie UI) – realne dane sprawdzi Dawid na preview.
-Plaster 5 odebrany i zmergowany (PR #6).
-Plaster 6 odebrany (PR #7); plastry 1–6 przetestowane przez Dawida na
-produkcji (komputer; telefon jeszcze nie).
-Plaster 7 czeka na odbiór – żadnych kroków ręcznych (zero migracji).
-Scenariusz odbioru u Dawida: (1) otworzyć apkę online, chwilę odczekać
-(service worker dociąga cache), (2) tryb samolotowy → dodać wpis ze
-zdjęciem → pieczątka od razu, pinezka na mapie, chip „Czeka na wysłanie"
-w dzienniku i na karcie, (3) przeładować apkę dalej offline – wpis ma
-zostać, (4) wyłączyć tryb samolotowy → chip powinien zniknąć sam (chwila),
-wpis i zdjęcie widoczne w Supabase, (5) po następnym deployu sprawdzić
-pasek „Jest nowa wersja". Najlepiej na telefonie – to jest właściwy test
-plastra 7.
+Plastry 1–7 odebrane: 1–6 na produkcji (PR #6, #7), plaster 7 (PR #8)
+przetestowany przez Dawida na komputerze i telefonie (sesja 6 – „telefon
+załapał"). Zgłoszony przy tym błąd podpowiedzi „W pobliżu" naprawiony
+w sesji 6 (D-36).
+Plaster 8 czeka na odbiór – żadnych kroków ręcznych. Scenariusz odbioru
+u Dawida (komputer i telefon, produkcja): (1) dodać wpis – podpowiedzi
+„W pobliżu" wracają; przy padzie dostawców zamiast pustki jest linia
+„Nie udało się pobrać miejsc w pobliżu" + „Spróbuj ponownie"; (2) dotknąć
+podpisu w nagłówku → arkusz: przełączyć na English (cała apka po
+angielsku, wybór przetrwa przeładowanie i przejdzie na drugie urządzenie
+po zalogowaniu), wrócić na Polski; (3) dodać drugi wpis w miejscu, gdzie
+już jakiś jest (inna nazwa w promieniu 50 m) → pytanie „To samo miejsce
+co …?"; po „Tak, to samo" oba wpisy dzielą jedną pinezkę z przełączanymi
+kartami (licznik „1/2"); (4) sprawdzić, że werdykty/kategorie wyglądają
+jak dotąd (bez regresji).

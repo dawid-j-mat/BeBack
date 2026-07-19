@@ -52,7 +52,8 @@ Caveat nigdy do treści wpisów ani elementów wymagających szybkiego czytania.
 - Cień „fizyczny": `box-shadow: 0 2px 0 rgba(38,50,77,.12)`; wciśnięcie =
   `translateY(1px)` + redukcja cienia. Przyciski zachowują się jak klawisze.
 - Linie przerywane (`dashed`, atrament-45) = szycie/obszary „do wypełnienia"
-  (drop zdjęcia, notatka prywatna, filtr nieaktywny).
+  (drop zdjęcia, notatka prywatna). Filtry mapy – także nieaktywne – mają
+  ramkę ciągłą, tak jak rysuje je prototyp (rozstrzygnięte w plastrze 8).
 
 ## 3. Elementy tożsamości (obowiązkowe)
 
