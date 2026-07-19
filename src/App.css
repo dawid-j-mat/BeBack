@@ -105,7 +105,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 180px;
+  /* wide enough for the admin's three-button source row */
+  min-width: 200px;
 }
 .podpis-jezyki {
   display: flex;
@@ -129,6 +130,30 @@
   background: var(--atrament);
   color: var(--papier-jasny);
   border-color: var(--atrament);
+}
+/* places source switch - the sheet shows it only to admins (D-39) */
+.podpis-zrodlo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed var(--atrament-45);
+  padding-top: 10px;
+}
+.zrodlo-tytul {
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--atrament-70);
+}
+.zrodlo-przyciski {
+  display: flex;
+  gap: 6px;
+}
+.jezyk.zrodlo {
+  font-size: 12px;
+  padding: 9px 4px;
 }
 .podpis-wyloguj {
   font-family: var(--font-tekst);

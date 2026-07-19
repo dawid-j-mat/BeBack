@@ -182,3 +182,47 @@ create policy "private notes: author only (delete)"
 create trigger private_notes_touch_updated_at
   before update on public.private_notes
   for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------- app settings
+-- Circle-wide settings (D-39): a single row, readable by everyone signed in,
+-- writable only by admins. Admin membership has no write policies at all -
+-- admins are appointed in the SQL Editor, never from the app.
+
+create table public.admins (
+  user_id uuid primary key references public.profiles (id) on delete cascade
+);
+
+alter table public.admins enable row level security;
+
+create policy "admins: read own membership"
+  on public.admins for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- Single-row table: the primary key check makes a second row impossible,
+-- so the app can always address the row as id = 1.
+create table public.app_settings (
+  id int primary key check (id = 1),
+  places_provider text not null default 'auto'
+    check (places_provider in ('auto', 'google', 'osm')),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.app_settings enable row level security;
+
+create policy "app settings: read for the circle"
+  on public.app_settings for select
+  to authenticated
+  using (true);
+
+create policy "app settings: update by admins"
+  on public.app_settings for update
+  to authenticated
+  using (exists (select 1 from public.admins where user_id = auth.uid()))
+  with check (exists (select 1 from public.admins where user_id = auth.uid()));
+
+create trigger app_settings_touch_updated_at
+  before update on public.app_settings
+  for each row execute function public.touch_updated_at();
+
+insert into public.app_settings (id) values (1);
