@@ -37,6 +37,29 @@
   „Wszystko / Tylko Wrócę", świeżo przybity wpis pulsuje i przyciąga mapę.
   Współdzielone kolory werdyktów w `src/lib/verdicts.ts`.
 
+## Zrobione (sesja 3, lipiec 2026)
+
+- **Plaster 5** – dziennik i edycja wpisu:
+  - **Dziennik** (`src/journal/`): chronologiczna lista grupowana miesiącami
+    (nagłówki w mianowniku, numeracja „str. N" od najstarszego miesiąca jak
+    w prototypie), mini-stemple werdyktów ze złotą nalepką WOW, licznik
+    wpisów z polską odmianą; dolna nawigacja przełącza Mapa ↔ Dziennik,
+    mapa pozostaje zamontowana pod spodem (nie traci pozycji).
+  - **Karta wpisu**: otwiera się z dziennika na miejscu, od razu na dotkniętym
+    wpisie (D-30); przycisk „Edytuj" tylko przy własnych wpisach; dyskretny
+    odręczny dopisek „werdykt zmieniony" przy zmienionym werdykcie (D-06).
+  - **Edycja** (`src/edit/EditEntry.tsx`, D-29): jeden ekran – kategoria,
+    werdykt (zmiana oznacza wpis na stałe przez `verdict_changed`; zejście
+    z „Wrócę" zeruje WOW), opis 200 znaków, data wizyty (max dziś),
+    **notatka prywatna** (upsert/kasowanie w `private_notes`) oraz
+    **usuwanie wpisu** za potwierdzeniem – oba punkty z feedbacku plastra 4.
+  - Kafle kategorii i przyciski werdyktów wydzielone jako współdzielone
+    komponenty (`CategoryTiles`, `VerdictButtons` w `src/add/`); mutacje
+    w `src/lib/entries.ts` (`updateEntry`, `deleteEntry`, `savePrivateNote`) –
+    autorstwa pilnuje RLS, nie frontend.
+  - **Zero migracji bazy**: `verdict_changed`, polityka „delete own"
+    i `private_notes` istnieją od plastra 2.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -77,16 +100,14 @@
   ale prototyp rysuje filtr ciągłą – zrobione wg prototypu (źródło prawdy);
   wyjaśnić z Dawidem przy szlifie w plastrze 8.
 
-## Następny krok: plaster 5 (nowa sesja)
+## Następny krok: plaster 6 (nowa sesja)
 
-Dziennik: chronologiczna lista wpisów grupowana miesiącami z mini-stemplami
-i znacznikiem WOW (`useEntries` z `src/lib/entries.ts` już zwraca komplet
-danych) + edycja wpisu, w tym oznaczanie zmiany werdyktu (`verdict_changed`).
-Feedback Dawida z odbioru plastra 4 – do ujęcia w edycji: **usuwanie własnego
-wpisu** (polityka RLS „delete own" już jest w bazie, brakuje tylko UI)
-i **dodawanie/edycja notatki prywatnej** (tabela `private_notes` gotowa od
-plastra 2; przepływ dodawania jej nie zbiera – edycja to naturalne miejsce).
-Do ponownego użycia: `Stamp`, `formatVisitDate`, karta wpisu (`EntryCard`).
+Zdjęcia: aparat/galeria, kompresja po stronie klienta (cel ≤ 300 KB),
+upload do bucketu `photos` (ścieżka `{user_id}/{entry_id}.jpg`), wyświetlanie
+na karcie wpisu (biała ramka z narożnikami, wg prototypu `.foto`). Placeholder
+w kroku 4 (`foto-drop wylaczone`) i tekst tymczasowy `foto_s` do podmiany;
+w edycji (D-29) dodać wymianę/usunięcie zdjęcia. Bucket `photos` trzeba
+założyć w Supabase (polityki: odczyt dla zalogowanych, zapis tylko autor).
 
 ## Stan odbioru
 
@@ -95,3 +116,9 @@ wymaga klucza Google Places (docs/google-places.md) w Vercelu i `.env.local`.
 Plaster 4 czeka na odbiór: wymaga migracji `osm_id` (punkt wyżej); weryfikacja
 wizualna zrobiona na danych zaślepkowych w Chromium (pinezki, klastry, karta,
 filtr, RLS notatki po stronie UI) – realne dane sprawdzi Dawid na preview.
+Plaster 5 czeka na odbiór: bez kroków ręcznych (zero migracji); weryfikacja
+wizualna na danych zaślepkowych w Chromium (dziennik PL/EN, karta z „Edytuj"
+tylko przy własnym wpisie, dopisek „werdykt zmieniony", ekran edycji,
+usuwanie) – realny zapis/odczyt sprawdzi Dawid na preview; przy okazji
+warto powtórzyć `supabase/rls_check.sql` i test dwóch kont dla notatki
+prywatnej (obszar objęty twardą zasadą z CLAUDE.md).

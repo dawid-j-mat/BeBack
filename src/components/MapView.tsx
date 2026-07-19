@@ -16,9 +16,11 @@ type MapFilter = 'all' | 'wroce';
 interface MapViewProps {
   entries: Entry[];
   freshEntryId: string | null;
+  currentUserId: string;
+  onEdit: (entry: Entry) => void;
 }
 
-export function MapView({ entries, freshEntryId }: MapViewProps) {
+export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<EntryMarkersController | null>(null);
@@ -95,7 +97,17 @@ export function MapView({ entries, freshEntryId }: MapViewProps) {
           {t('f_wroce')}
         </button>
       </div>
-      {selected && <EntryCard group={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EntryCard
+          group={selected}
+          currentUserId={currentUserId}
+          onEdit={(entry) => {
+            setSelected(null);
+            onEdit(entry);
+          }}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </>
   );
 }

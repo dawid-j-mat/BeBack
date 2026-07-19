@@ -80,6 +80,14 @@
   color: var(--lotniczy-niebieski);
   margin: 4px 0 10px;
 }
+/* handwritten margin note marking a changed verdict (D-06) */
+.zmiana-reka {
+  font-family: var(--font-reka);
+  font-size: 16px;
+  color: var(--atrament-45);
+  transform: rotate(-1.5deg);
+  margin: -4px 0 8px;
+}
 .kartki {
   display: flex;
   align-items: center;
@@ -157,4 +165,9 @@
   font-size: 18px;
   color: var(--atrament-70);
   transform: rotate(-2deg);
+}
+.meta-linia .meta-prawa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

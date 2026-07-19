@@ -1,10 +1,21 @@
 import { t } from '../i18n';
 
-// The journal button comes alive in slice 5.
-export function BottomNav({ onAdd }: { onAdd: () => void }) {
+export type AppView = 'mapa' | 'dziennik';
+
+interface BottomNavProps {
+  view: AppView;
+  onNav: (view: AppView) => void;
+  onAdd: () => void;
+}
+
+export function BottomNav({ view, onNav, onAdd }: BottomNavProps) {
   return (
     <nav className="nav">
-      <button type="button" className="on">
+      <button
+        type="button"
+        className={view === 'mapa' ? 'on' : ''}
+        onClick={() => onNav('mapa')}
+      >
         <svg
           className="ikona"
           viewBox="0 0 24 24"
@@ -23,7 +34,11 @@ export function BottomNav({ onAdd }: { onAdd: () => void }) {
           <path d="M12 5v14M5 12h14" />
         </svg>
       </button>
-      <button type="button">
+      <button
+        type="button"
+        className={view === 'dziennik' ? 'on' : ''}
+        onClick={() => onNav('dziennik')}
+      >
         <svg
           className="ikona"
           viewBox="0 0 24 24"
