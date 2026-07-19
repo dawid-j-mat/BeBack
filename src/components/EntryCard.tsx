@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './EntryCard.css';
-import type { PlaceGroup } from '../lib/entries';
+import type { Entry, PlaceGroup } from '../lib/entries';
 import type { Category } from '../add/StepCategory';
 import { Stamp } from './Stamp';
 import { t, formatVisitDate } from '../i18n';
@@ -13,16 +13,24 @@ const CATEGORY_KEY: Record<Category, 'kat_nocleg' | 'kat_jedzenie' | 'kat_atrakc
 
 interface EntryCardProps {
   group: PlaceGroup;
+  currentUserId: string;
+  onEdit: (entry: Entry) => void;
   onClose: () => void;
+  initialEntryId?: string;
 }
 
 // A journal page sliding up from the bottom (prototype: .karta): sticky tape,
 // the verdict stamp in the corner, the 200-char note and - only for the
 // author - the private note. Several entries at one place share the pin and
-// flip here like pages (D-27).
-export function EntryCard({ group, onClose }: EntryCardProps) {
-  const [pageIndex, setPageIndex] = useState(0);
-  useEffect(() => setPageIndex(0), [group]);
+// flip here like pages (D-27). The journal passes initialEntryId to open the
+// card straight at the tapped entry.
+export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryId }: EntryCardProps) {
+  const [pageIndex, setPageIndex] = useState(() =>
+    Math.max(0, group.entries.findIndex((e) => e.id === initialEntryId)),
+  );
+  useEffect(() => {
+    setPageIndex(Math.max(0, group.entries.findIndex((e) => e.id === initialEntryId)));
+  }, [group, initialEntryId]);
 
   const count = group.entries.length;
   const entry = group.entries[Math.min(pageIndex, count - 1)];
@@ -47,6 +55,7 @@ export function EntryCard({ group, onClose }: EntryCardProps) {
             {t(CATEGORY_KEY[entry.category])}
             {group.place.city ? ` · ${group.place.city}` : ''}
           </div>
+          {entry.verdictChanged && <div className="zmiana-reka">{t('werdykt_zmieniony')}</div>}
           {count > 1 && (
             <div className="kartki">
               <button
@@ -83,7 +92,14 @@ export function EntryCard({ group, onClose }: EntryCardProps) {
           )}
           <div className="meta-linia">
             <span className="data-reka">{formatVisitDate(visited)}</span>
-            <span className="podpis-reka">{entry.authorName}</span>
+            <span className="meta-prawa">
+              <span className="podpis-reka">{entry.authorName}</span>
+              {entry.userId === currentUserId && (
+                <button type="button" className="btn-maly" onClick={() => onEdit(entry)}>
+                  {t('edytuj')}
+                </button>
+              )}
+            </span>
           </div>
         </div>
       </article>

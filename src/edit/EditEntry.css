@@ -1,0 +1,81 @@
+/* Edit screen – shares the add-flow shell (AddFlow.css); only the fields
+   the flow never shows live here: visit date, private note, delete. */
+
+.data-wizyty {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 6px;
+}
+.data-wizyty input {
+  border: 1px solid var(--atrament-45);
+  border-radius: var(--promien);
+  background: var(--bialy);
+  padding: 12px 14px;
+  font-family: var(--font-tekst);
+  font-size: 14.5px;
+  color: var(--atrament);
+  box-shadow: inset 0 2px 4px rgba(38, 50, 77, 0.06);
+  min-height: 44px;
+}
+.data-wizyty input:focus {
+  outline: none;
+  border-color: var(--lotniczy-niebieski);
+}
+
+/* private note: the same dashed "author only" area as on the card, with a
+   handwriting textarea instead of a paragraph */
+.pryw-edycja {
+  border: 1px dashed var(--atrament-45);
+  border-radius: var(--promien);
+  background: var(--papier);
+  padding: 11px 13px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.pryw-edycja > svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--atrament-70);
+}
+.pryw-edycja label {
+  flex: 1;
+}
+.pryw-edycja b {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--atrament-70);
+  margin-bottom: 4px;
+}
+.krok-cialo .pryw-edycja textarea {
+  min-height: 84px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  font-family: var(--font-reka);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--atrament-70);
+}
+
+.usun-wpis {
+  align-self: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--czerwien);
+  padding: 12px 16px;
+  margin-top: 6px;
+  min-height: 44px;
+}
