@@ -10,6 +10,9 @@ import { StepVerdict } from './StepVerdict';
 import { StepNote } from './StepNote';
 import { Przybicie } from './Przybicie';
 import type { Verdict } from '../lib/verdicts';
+import { usePhotoPick } from '../photo/usePhotoPick';
+import { uploadPhoto } from '../lib/photos';
+import { setEntryPhotoPath } from '../lib/entries';
 
 interface AddFlowProps {
   userId: string;
@@ -25,9 +28,11 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [wow, setWow] = useState(false);
   const [note, setNote] = useState('');
+  const photo = usePhotoPick();
   const [saving, setSaving] = useState(false);
   const [stamped, setStamped] = useState(false);
   const [error, setError] = useState(false);
+  const [photoWarn, setPhotoWarn] = useState(false);
 
   useEffect(() => {
     getPosition().then(setPosition).catch(() => setPosition(null));
@@ -68,7 +73,9 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
   }
 
   async function save() {
-    if (!place || !category || !verdict || saving) return;
+    // photo.compressing guards the race where stamping mid-compression would
+    // silently drop the just-picked photo (blob is not ready yet)
+    if (!place || !category || !verdict || saving || photo.compressing) return;
     setSaving(true);
     setError(false);
     try {
@@ -86,8 +93,23 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
         .select('id')
         .single();
       if (entryError) throw entryError;
+      const entryId = entryData.id as string;
+
+      // The photo is optional (SPEC §3.1): if the upload fails the entry still
+      // stands, so we warn and stamp anyway rather than losing the whole visit.
+      if (photo.blob) {
+        try {
+          const path = await uploadPhoto(userId, entryId, photo.blob);
+          await setEntryPhotoPath(entryId, path);
+        } catch (photoErr) {
+          console.error('[beback] photo upload failed:', photoErr);
+          setPhotoWarn(true);
+          await new Promise((r) => setTimeout(r, 1600)); // let the warning be seen
+        }
+      }
+
       setStamped(true);
-      onSaved?.(entryData.id as string);
+      onSaved?.(entryId);
     } catch (err) {
       console.error('[beback] entry save failed:', err);
       setError(true);
@@ -175,6 +197,10 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
           onWowToggle={() => setWow((w) => !w)}
           note={note}
           onNoteChange={setNote}
+          photoUrl={photo.previewUrl}
+          photoCompressing={photo.compressing}
+          onPhotoFile={(f) => void photo.pick(f)}
+          onPhotoRemove={photo.clear}
           saving={saving}
           onBack={() => setStep(3)}
           onSave={() => void save()}
@@ -182,6 +208,7 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
       )}
 
       <div className={`toast${error ? ' on' : ''}`}>{t('zapis_blad')}</div>
+      <div className={`toast${photoWarn ? ' on' : ''}`}>{t('foto_blad')}</div>
     </div>
   );
 }

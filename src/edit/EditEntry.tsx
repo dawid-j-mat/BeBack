@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../add/AddFlow.css';
 import './EditEntry.css';
 import { deleteEntry, savePrivateNote, updateEntry, type Entry } from '../lib/entries';
+import { deletePhoto, signedPhotoUrl, uploadPhoto } from '../lib/photos';
+import { usePhotoPick } from '../photo/usePhotoPick';
+import { PhotoField } from '../photo/PhotoField';
 import { CategoryTiles, type Category } from '../add/StepCategory';
 import { VerdictButtons } from '../add/StepVerdict';
 import type { Verdict } from '../lib/verdicts';
@@ -31,8 +34,26 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
   const [note, setNote] = useState(entry.note);
   const [visitedOn, setVisitedOn] = useState(entry.visitedOn);
   const [privateNote, setPrivateNote] = useState(entry.privateNote ?? '');
+  const photo = usePhotoPick();
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+
+  // The current photo (if any) is shown through a signed URL until the user
+  // picks a new one or removes it.
+  useEffect(() => {
+    let cancelled = false;
+    if (entry.photoPath) {
+      void signedPhotoUrl(entry.photoPath).then((url) => {
+        if (!cancelled) setExistingPhotoUrl(url);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [entry.photoPath]);
+
+  const photoPreview = photo.removed ? null : (photo.previewUrl ?? existingPhotoUrl);
 
   function pickVerdict(v: Verdict) {
     setVerdict(v);
@@ -40,10 +61,23 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
   }
 
   async function save() {
-    if (saving || !visitedOn) return;
+    // photo.compressing guards the race where saving mid-compression would
+    // silently drop the just-picked photo (blob is not ready yet)
+    if (saving || !visitedOn || photo.compressing) return;
     setSaving(true);
     setError(false);
     try {
+      // Resolve the photo change first so its new path (if any) rides along in
+      // the same update. Path is deterministic, so replacing a photo is a
+      // storage overwrite; only add/remove actually change photo_path.
+      let photoField: { photoPath?: string | null } = {};
+      if (photo.blob) {
+        const path = await uploadPhoto(userId, entry.id, photo.blob);
+        photoField = { photoPath: path };
+      } else if (photo.removed && entry.photoPath) {
+        photoField = { photoPath: null };
+      }
+
       await updateEntry(entry.id, {
         category,
         verdict,
@@ -52,8 +86,16 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
         visitedOn,
         // once marked, a changed verdict never goes back to unmarked
         verdictChanged: entry.verdictChanged || verdict !== entry.verdict,
+        ...photoField,
       });
       await savePrivateNote(entry.id, userId, privateNote);
+      // Drop the old storage object only after the row no longer points at it,
+      // so a failure here just leaves a harmless orphan, never a broken link.
+      if (photo.removed && entry.photoPath && !photo.blob) {
+        await deletePhoto(entry.photoPath).catch((e) =>
+          console.error('[beback] old photo cleanup failed:', e),
+        );
+      }
       onSaved();
     } catch (err) {
       console.error('[beback] entry update failed:', err);
@@ -68,6 +110,13 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
     setError(false);
     try {
       await deleteEntry(entry.id); // the private note goes with it (cascade FK)
+      // Storage knows no cascades: drop the photo ourselves, after the row is
+      // gone - a failure here leaves a harmless orphan, never a broken link.
+      if (entry.photoPath) {
+        await deletePhoto(entry.photoPath).catch((e) =>
+          console.error('[beback] photo cleanup on delete failed:', e),
+        );
+      }
       onSaved();
     } catch (err) {
       console.error('[beback] entry delete failed:', err);
@@ -128,6 +177,13 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
           />
           <div className={`licznik${note.length >= 200 ? ' limit' : ''}`}>{note.length} / 200</div>
 
+          <PhotoField
+            previewUrl={photoPreview}
+            compressing={photo.compressing}
+            onFile={(f) => void photo.pick(f)}
+            onRemove={photo.clear}
+          />
+
           <label className="pod-naglowek data-wizyty">
             {t('data_wizyty')}
             <input
@@ -160,7 +216,7 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
           <button
             type="button"
             className="btn pieczec"
-            disabled={saving || !visitedOn}
+            disabled={saving || !visitedOn || photo.compressing}
             onClick={() => void save()}
           >
             {saving ? t('zapisywanie_zmian') : t('zapisz_zmiany')}

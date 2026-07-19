@@ -60,6 +60,34 @@
   - **Zero migracji bazy**: `verdict_changed`, polityka „delete own"
     i `private_notes` istnieją od plastra 2.
 
+## Zrobione (sesja 4, lipiec 2026)
+
+- **Plaster 6** – zdjęcia:
+  - **Kompresja** (`src/lib/photo.ts`, D-31): `browser-image-compression`
+    w web workerze, `maxSizeMB: 0.3` (twarde ≤ 300 KB), prostuje obrót EXIF;
+    importowana **dynamicznie** – osobny chunk (~20 KB gzip) pobierany dopiero
+    przy pierwszym zdjęciu, start apki rośnie o < 5 KB.
+  - **Storage** (`src/lib/photos.ts`, D-32): prywatny kubełek `photos`,
+    ścieżka `{user_id}/{entry_id}.jpg`, wyświetlanie przez podpisany URL
+    (`createSignedUrl`); `uploadPhoto`/`deletePhoto`/`signedPhotoUrl`.
+  - **Wspólny komponent** (`src/photo/`): `PhotoField` (drop → wybór aparat/
+    galeria; kadr z ramką, narożnikami, „×"; dotknięcie kadru = wymiana) +
+    hook `usePhotoPick` (kompresja, podgląd przez object URL, sprzątanie).
+    Używany i w dodawaniu, i w edycji.
+  - **Dodawanie** (`StepNote`/`AddFlow`): upload po insercie wpisu; zdjęcie
+    opcjonalne, więc błąd uploadu nie wywraca wpisu (toast, pieczątka i tak
+    przybita). Zniknął tekst tymczasowy „Dojdzie w kolejnej wersji".
+  - **Karta** (`EntryCard`): zdjęcie w białej ramce z narożnikami i podpisem
+    „nasze zdjęcie" (wzór `.foto` z prototypu).
+  - **Edycja** (`EditEntry`): dodanie/wymiana/usunięcie zdjęcia; stara
+    ścieżka kasowana ze Storage dopiero po zapisie wiersza (żadnych
+    „martwych" linków).
+  - `photo_path` w `entries` istnieje od plastra 2 – **migruje się tylko
+    kubełek Storage** (patrz „Do zrobienia ręcznie").
+  - Weryfikacja w Chromium (~390 px): render karty i edycji na zaślepkach,
+    pełny obieg wyboru pliku → kompresja w przeglądarce dała **255 KB**
+    z testowego 2400×1600.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -72,14 +100,19 @@
   VITE_PLACES_PROVIDER (google|osm; puste = automatyka z D-25).
 - Praca przebiega przez PR-y na gałęzi roboczej → merge do `main` → autodeploy.
 
-## Do zrobienia ręcznie przed odbiorem plastra 4
+## Do zrobienia ręcznie przed odbiorem plastra 6
 
-1. **Migracja bazy**: w Supabase SQL Editor uruchomić
-   `supabase/migrations/2026-07_plaster4_osm_id.sql` (dodaje kolumnę
-   `places.osm_id`; bez niej zapis miejsca znalezionego przez OSM się nie uda).
-2. (Opcjonalnie) przetestować darmowe źródło: otworzyć apkę z `?places=osm`
-   w adresie (D-28) i porównać wyniki „W pobliżu" z Google; `?places=auto`
-   przywraca automatykę.
+1. **Kubełek zdjęć**: w Supabase SQL Editor uruchomić
+   `supabase/migrations/2026-07_plaster6_photos.sql` (tworzy prywatny kubełek
+   `photos` + reguły RLS Storage). Instrukcja krok po kroku: `docs/photos.md`.
+   Bez tego uploady zdjęć się nie udadzą (wpis zapisze się bez zdjęcia).
+
+Zaległe z wcześniejszych plastrów (jeśli jeszcze nierobione):
+
+2. **Migracja bazy plastra 4**: `supabase/migrations/2026-07_plaster4_osm_id.sql`
+   (kolumna `places.osm_id`; bez niej zapis miejsca z OSM się nie uda).
+3. (Opcjonalnie) darmowe źródło miejsc: otworzyć apkę z `?places=osm` (D-28)
+   i porównać „W pobliżu" z Google; `?places=auto` przywraca automatykę.
 
 ## Znane sprawy / backlog techniczny
 
@@ -87,12 +120,11 @@
   (np. Resend, darmowy próg).
 - Aktualizacja PWA wymaga zamknięcia kart apki (autoUpdate podmienia wersję
   przy kolejnym wejściu); w plastrze 7 dodać sygnał „jest nowa wersja".
-- Placeholder zdjęcia w kroku 4 ma tekst tymczasowy („Dojdzie w kolejnej
-  wersji") – zniknie w plastrze 6; pilnować zasady zera didaskaliów.
 - Etykiety mapy w Noto Sans (glyphy OpenFreeMap); Domine/Karla wymagałyby
   własnego hostingu glyphów – rozważyć w plastrze 8.
-- Bundle ~1,2 MB (335 KB gzip; głównie MapLibre) – rozważyć code-splitting
-  przy plastrze 7.
+- Bundle główny ~1,48 MB (403 KB gzip; głównie MapLibre) – biblioteka
+  kompresji zdjęć już wydzielona do osobnego chunku (D-31); sam MapLibre do
+  ewentualnego code-splittingu przy plastrze 7.
 - Publiczne serwery Overpass/Photon bywają obciążone – zapytania mają timeout
   6 s; gdyby to przeszkadzało w praktyce, rozważyć mirror Overpass
   (kumi.systems) jako drugi adres.
@@ -100,14 +132,15 @@
   ale prototyp rysuje filtr ciągłą – zrobione wg prototypu (źródło prawdy);
   wyjaśnić z Dawidem przy szlifie w plastrze 8.
 
-## Następny krok: plaster 6 (nowa sesja)
+## Następny krok: plaster 7 (nowa sesja)
 
-Zdjęcia: aparat/galeria, kompresja po stronie klienta (cel ≤ 300 KB),
-upload do bucketu `photos` (ścieżka `{user_id}/{entry_id}.jpg`), wyświetlanie
-na karcie wpisu (biała ramka z narożnikami, wg prototypu `.foto`). Placeholder
-w kroku 4 (`foto-drop wylaczone`) i tekst tymczasowy `foto_s` do podmiany;
-w edycji (D-29) dodać wymianę/usunięcie zdjęcia. Bucket `photos` trzeba
-założyć w Supabase (polityki: odczyt dla zalogowanych, zapis tylko autor).
+Offline-first (SPEC §3.5, wymóg twardy pod Wyspy Owcze): service worker +
+kolejka w IndexedDB, dodawanie wpisu ze zdjęciem działa bez sieci, sync w tle
+po powrocie zasięgu, dyskretny wskaźnik „Czeka na wysłanie" przy niezsynchroni-
+zowanych wpisach (styl `.chip-sync` jest w prototypie), kafelki mapy z cache.
+Przy okazji: sygnał „jest nowa wersja" PWA (dziś autoUpdate po zamknięciu kart)
+i ewentualny code-splitting MapLibre. Uwaga projektowa: kolejka offline musi
+objąć też upload zdjęcia (blob w IndexedDB do czasu sync).
 
 ## Stan odbioru
 
@@ -116,9 +149,11 @@ wymaga klucza Google Places (docs/google-places.md) w Vercelu i `.env.local`.
 Plaster 4 czeka na odbiór: wymaga migracji `osm_id` (punkt wyżej); weryfikacja
 wizualna zrobiona na danych zaślepkowych w Chromium (pinezki, klastry, karta,
 filtr, RLS notatki po stronie UI) – realne dane sprawdzi Dawid na preview.
-Plaster 5 czeka na odbiór: bez kroków ręcznych (zero migracji); weryfikacja
-wizualna na danych zaślepkowych w Chromium (dziennik PL/EN, karta z „Edytuj"
-tylko przy własnym wpisie, dopisek „werdykt zmieniony", ekran edycji,
-usuwanie) – realny zapis/odczyt sprawdzi Dawid na preview; przy okazji
-warto powtórzyć `supabase/rls_check.sql` i test dwóch kont dla notatki
-prywatnej (obszar objęty twardą zasadą z CLAUDE.md).
+Plaster 5 odebrany i zmergowany (PR #6).
+Plaster 6 czeka na odbiór: wymaga założenia kubełka `photos` (punkt 1 „Do
+zrobienia ręcznie", `docs/photos.md`); weryfikacja wizualna na zaślepkach
+w Chromium (karta ze zdjęciem, edycja: dodanie/wymiana/usunięcie, kompresja
+2400×1600 → 255 KB). Realny upload, podpisany URL i obrót EXIF zdjęcia
+z telefonu sprawdzi Dawid na preview. Zdjęcia dzieli całe grono (odczyt),
+zapis tylko autor – po założeniu kubełka warto zerknąć na dwóch kontach,
+że jedno konto nie może nadpisać zdjęcia drugiego (reguły Storage z D-32).

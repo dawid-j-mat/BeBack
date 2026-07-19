@@ -188,3 +188,26 @@ otwarta od razu na dotkniętym wpisie; po zamknięciu użytkownik wraca tam, sk�
 przyszedł. To zmiana zachowania, nie pikseli – wygląd karty pozostaje 1:1
 z prototypem. Odrzucone: wierne odtworzenie skoku na mapę (dezorientuje
 i gubi pozycję przewinięcia listy).
+
+**D-31 · Kompresja zdjęć biblioteką `browser-image-compression`, ładowaną leniwie.**
+SPEC §5 dopuszcza canvas albo tę bibliotekę; wybór padł na bibliotekę, bo daje
+lepszą jakość i wygodę bez własnej dłubaniny: kompresuje w web workerze (nie
+zawiesza interfejsu przy 12-megapikselowym zdjęciu z telefonu), sama prostuje
+obrót EXIF (bez tego portretowe zdjęcia z telefonu lądują „na boku") i celuje
+w maksymalny rozmiar (`maxSizeMB: 0.3` = twardy limit 300 KB z DESIGN/CLAUDE.md).
+Kosztem jest waga – z inline'owanym workerem ~340 KB gzip – więc importujemy ją
+**dynamicznie**: ląduje w osobnym kawałku (chunku) pobieranym dopiero przy
+pierwszym wyborze zdjęcia, a start aplikacji rośnie o niecałe 5 KB (SPEC §8,
+„< 3 s na 4G"; realizuje też zapowiedziany w STATUS code-splitting). Odrzucone:
+własna kompresja na canvasie (mniej pewny obrót EXIF, więcej kodu do utrzymania
+przez jedną osobę).
+
+**D-32 · Zdjęcia w prywatnym kubełku Storage, pokazywane przez podpisane adresy.**
+Kubełek `photos` jest prywatny; front pobiera krótkotrwały „signed URL" przy każdym
+wyświetleniu. Reguły RLS Storage odwzorowują model wpisów (D-20): całe grono
+czyta wszystkie zdjęcia, ale zapis/wymiana/kasowanie tylko we własnym folderze
+`{user_id}/…` (bazę pilnuje pierwszy człon ścieżki). Ścieżka `{user_id}/{entry_id}.jpg`
+jest deterministyczna, więc wymiana zdjęcia to nadpisanie tego samego pliku –
+kolumna `photo_path` zmienia się tylko przy dodaniu lub usunięciu. Odrzucone:
+kubełek publiczny z „nieodgadywalną" ścieżką (prywatność zależałaby od sekretności
+adresu, nie od reguł bazy – sprzeczne z etosem RLS projektu).

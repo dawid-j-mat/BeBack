@@ -64,6 +64,22 @@
   height: 80px;
   transform: rotate(8deg);
 }
+/* photo on the journal page: extra bottom room for the handwritten caption
+   (the .foto frame itself comes from PhotoField.css) */
+.karta .foto-karta {
+  margin-bottom: 14px;
+  padding-bottom: 26px;
+}
+.karta .foto-karta .podpis-foto {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-reka);
+  font-size: 15px;
+  color: var(--atrament-70);
+}
 .karta h2 {
   font-family: var(--font-serif);
   font-weight: 700;
