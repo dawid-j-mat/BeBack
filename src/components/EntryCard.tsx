@@ -3,6 +3,7 @@ import './EntryCard.css';
 import type { Entry, PlaceGroup } from '../lib/entries';
 import type { Category } from '../add/StepCategory';
 import { Stamp } from './Stamp';
+import { signedPhotoUrl } from '../lib/photos';
 import { t, formatVisitDate } from '../i18n';
 
 const CATEGORY_KEY: Record<Category, 'kat_nocleg' | 'kat_jedzenie' | 'kat_atrakcja'> = {
@@ -36,6 +37,22 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
   const entry = group.entries[Math.min(pageIndex, count - 1)];
   const visited = new Date(`${entry.visitedOn}T12:00:00`);
 
+  // The bucket is private (D-32), so each photo is shown through a short-lived
+  // signed URL fetched when the visible entry changes.
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setPhotoUrl(null);
+    if (entry.photoPath) {
+      void signedPhotoUrl(entry.photoPath).then((url) => {
+        if (!cancelled) setPhotoUrl(url);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [entry.photoPath]);
+
   return (
     <>
       <button type="button" className="zaslona" aria-label={t('zamknij')} onClick={onClose} />
@@ -50,6 +67,16 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
               date={formatVisitDate(visited)}
             />
           </div>
+          {photoUrl && (
+            <div className="foto foto-karta">
+              <span className="naroznik n1" aria-hidden="true" />
+              <span className="naroznik n2" aria-hidden="true" />
+              <span className="naroznik n3" aria-hidden="true" />
+              <span className="naroznik n4" aria-hidden="true" />
+              <img src={photoUrl} alt="" />
+              <span className="podpis-foto">{t('foto_podpis')}</span>
+            </div>
+          )}
           <h2>{group.place.name}</h2>
           <div className="kat-linia">
             {t(CATEGORY_KEY[entry.category])}

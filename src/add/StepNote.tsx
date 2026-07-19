@@ -1,5 +1,6 @@
 import { t } from '../i18n';
 import type { Verdict } from '../lib/verdicts';
+import { PhotoField } from '../photo/PhotoField';
 
 interface StepNoteProps {
   verdict: Verdict | null;
@@ -7,6 +8,10 @@ interface StepNoteProps {
   onWowToggle: () => void;
   note: string;
   onNoteChange: (note: string) => void;
+  photoUrl: string | null;
+  photoCompressing: boolean;
+  onPhotoFile: (file: File) => void;
+  onPhotoRemove: () => void;
   saving: boolean;
   onSave: () => void;
   onBack: () => void;
@@ -18,6 +23,10 @@ export function StepNote({
   onWowToggle,
   note,
   onNoteChange,
+  photoUrl,
+  photoCompressing,
+  onPhotoFile,
+  onPhotoRemove,
   saving,
   onSave,
   onBack,
@@ -48,17 +57,12 @@ export function StepNote({
           </button>
         )}
 
-        <div className="foto-drop wylaczone" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-            <rect x="3" y="6" width="18" height="14" rx="2" />
-            <circle cx="12" cy="13" r="4" />
-            <path d="M9 6l1.2-2h3.6L15 6" />
-          </svg>
-          <span>
-            <b>{t('foto_b')}</b>
-            <small>{t('foto_s')}</small>
-          </span>
-        </div>
+        <PhotoField
+          previewUrl={photoUrl}
+          compressing={photoCompressing}
+          onFile={onPhotoFile}
+          onRemove={onPhotoRemove}
+        />
       </div>
       <div className="stopka-kroku">
         <button type="button" className="btn cichy" onClick={onBack}>

@@ -1,0 +1,86 @@
+/* Photo control – filled state reuses the journal photo frame from the
+   prototype (.foto with four corners); empty state reuses .foto-drop. */
+
+.foto-pole {
+  width: 100%;
+}
+
+/* framed photo: white border, slight tilt, photographic corners */
+.foto-pole .foto {
+  position: relative;
+  margin: 4px auto;
+  width: 88%;
+  background: var(--bialy);
+  padding: 8px;
+  border: 1px solid var(--atrament-20);
+  transform: rotate(-1.2deg);
+  box-shadow: 0 3px 10px rgba(38, 50, 77, 0.18);
+}
+.foto-pole .foto .foto-img {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.foto-pole .foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.naroznik {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--atrament-70);
+}
+.naroznik.n1 {
+  top: -2px;
+  left: -2px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.naroznik.n2 {
+  top: -2px;
+  right: -2px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.naroznik.n3 {
+  bottom: -2px;
+  left: -2px;
+  border-right: 0;
+  border-top: 0;
+}
+.naroznik.n4 {
+  bottom: -2px;
+  right: -2px;
+  border-left: 0;
+  border-top: 0;
+}
+.foto-usun {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--atrament-20);
+  background: var(--papier-jasny);
+  color: var(--atrament);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
+}
+.foto-usun svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* empty drop reuses .foto-drop (AddFlow.css); this only handles the busy state */
+.foto-drop.zajete {
+  opacity: 0.5;
+  cursor: default;
+}

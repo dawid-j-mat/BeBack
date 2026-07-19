@@ -25,6 +25,7 @@ export interface Entry {
   note: string;
   visitedOn: string;
   verdictChanged: boolean;
+  photoPath: string | null;
   authorName: string;
   privateNote: string | null;
   place: EntryPlace;
@@ -39,6 +40,7 @@ interface RawEntry {
   note: string;
   visited_on: string;
   verdict_changed: boolean;
+  photo_path: string | null;
   place: EntryPlace | EntryPlace[] | null;
   author: { display_name: string } | { display_name: string }[] | null;
   private_note: { body: string } | { body: string }[] | null;
@@ -52,7 +54,7 @@ export async function fetchEntries(): Promise<Entry[]> {
   const { data, error } = await supabase
     .from('entries')
     .select(
-      `id, user_id, category, verdict, wow, note, visited_on, verdict_changed,
+      `id, user_id, category, verdict, wow, note, visited_on, verdict_changed, photo_path,
        place:places(id, name, city, country, lat, lng),
        author:profiles(display_name),
        private_note:private_notes(body)`,
@@ -74,6 +76,7 @@ export async function fetchEntries(): Promise<Entry[]> {
         note: row.note,
         visitedOn: row.visited_on,
         verdictChanged: row.verdict_changed,
+        photoPath: row.photo_path,
         authorName: one(row.author)?.display_name ?? '',
         privateNote: one(row.private_note)?.body ?? null,
         place,
@@ -83,7 +86,10 @@ export async function fetchEntries(): Promise<Entry[]> {
 }
 
 // Editable fields of an entry (SPEC §3.1); RLS lets these calls touch only
-// the author's own rows, so no ownership checks client-side.
+// the author's own rows, so no ownership checks client-side. `photoPath` is
+// optional: omit it to leave the photo untouched, pass a string to set it or
+// null to clear it (the path itself is deterministic, so replacing a photo is
+// a storage overwrite that leaves this value unchanged).
 export interface EntryPatch {
   category: Category;
   verdict: Verdict;
@@ -91,20 +97,27 @@ export interface EntryPatch {
   note: string;
   visitedOn: string;
   verdictChanged: boolean;
+  photoPath?: string | null;
 }
 
 export async function updateEntry(id: string, patch: EntryPatch): Promise<void> {
-  const { error } = await supabase
-    .from('entries')
-    .update({
-      category: patch.category,
-      verdict: patch.verdict,
-      wow: patch.wow,
-      note: patch.note,
-      visited_on: patch.visitedOn,
-      verdict_changed: patch.verdictChanged,
-    })
-    .eq('id', id);
+  const fields: Record<string, unknown> = {
+    category: patch.category,
+    verdict: patch.verdict,
+    wow: patch.wow,
+    note: patch.note,
+    visited_on: patch.visitedOn,
+    verdict_changed: patch.verdictChanged,
+  };
+  if ('photoPath' in patch) fields.photo_path = patch.photoPath;
+  const { error } = await supabase.from('entries').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+// Set or clear an entry's photo path on its own (used right after uploading a
+// freshly stamped entry's photo).
+export async function setEntryPhotoPath(id: string, photoPath: string | null): Promise<void> {
+  const { error } = await supabase.from('entries').update({ photo_path: photoPath }).eq('id', id);
   if (error) throw error;
 }
 

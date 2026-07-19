@@ -10,6 +10,7 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
+    "browser-image-compression": "^2.0.2",
     "maplibre-gl": "^5.24.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
