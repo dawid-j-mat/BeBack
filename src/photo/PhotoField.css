@@ -1,12 +1,15 @@
-/* Photo control – filled state reuses the journal photo frame from the
-   prototype (.foto with four corners); empty state reuses .foto-drop. */
+/* Photo frame and picker. The .foto frame rules are deliberately unscoped:
+   the entry card renders the same frame (.foto.foto-karta) outside of
+   .foto-pole, so scoping them under .foto-pole would strip the card photo of
+   its white border and leave the absolutely-positioned corners and caption
+   anchored to the card itself. */
 
 .foto-pole {
   width: 100%;
 }
 
 /* framed photo: white border, slight tilt, photographic corners */
-.foto-pole .foto {
+.foto {
   position: relative;
   margin: 4px auto;
   width: 88%;
@@ -16,7 +19,7 @@
   transform: rotate(-1.2deg);
   box-shadow: 0 3px 10px rgba(38, 50, 77, 0.18);
 }
-.foto-pole .foto .foto-img {
+.foto .foto-img {
   display: block;
   width: 100%;
   padding: 0;
@@ -24,7 +27,7 @@
   background: none;
   cursor: pointer;
 }
-.foto-pole .foto img {
+.foto img {
   display: block;
   width: 100%;
   height: auto;
@@ -73,6 +76,12 @@
   place-items: center;
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
+}
+/* the visible badge stays 32px, but the tap area meets the 44px minimum */
+.foto-usun::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
 }
 .foto-usun svg {
   width: 16px;

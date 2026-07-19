@@ -68,7 +68,12 @@ export function StepNote({
         <button type="button" className="btn cichy" onClick={onBack}>
           {t('wstecz')}
         </button>
-        <button type="button" className="btn pieczec" disabled={saving} onClick={onSave}>
+        <button
+          type="button"
+          className="btn pieczec"
+          disabled={saving || photoCompressing}
+          onClick={onSave}
+        >
           {saving ? t('zapisywanie') : t('zapisz')}
         </button>
       </div>

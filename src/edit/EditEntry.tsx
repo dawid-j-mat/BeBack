@@ -61,7 +61,9 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
   }
 
   async function save() {
-    if (saving || !visitedOn) return;
+    // photo.compressing guards the race where saving mid-compression would
+    // silently drop the just-picked photo (blob is not ready yet)
+    if (saving || !visitedOn || photo.compressing) return;
     setSaving(true);
     setError(false);
     try {
@@ -108,6 +110,13 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
     setError(false);
     try {
       await deleteEntry(entry.id); // the private note goes with it (cascade FK)
+      // Storage knows no cascades: drop the photo ourselves, after the row is
+      // gone - a failure here leaves a harmless orphan, never a broken link.
+      if (entry.photoPath) {
+        await deletePhoto(entry.photoPath).catch((e) =>
+          console.error('[beback] photo cleanup on delete failed:', e),
+        );
+      }
       onSaved();
     } catch (err) {
       console.error('[beback] entry delete failed:', err);
@@ -207,7 +216,7 @@ export function EditEntry({ entry, userId, onClose, onSaved }: EditEntryProps) {
           <button
             type="button"
             className="btn pieczec"
-            disabled={saving || !visitedOn}
+            disabled={saving || !visitedOn || photo.compressing}
             onClick={() => void save()}
           >
             {saving ? t('zapisywanie_zmian') : t('zapisz_zmiany')}

@@ -73,7 +73,9 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
   }
 
   async function save() {
-    if (!place || !category || !verdict || saving) return;
+    // photo.compressing guards the race where stamping mid-compression would
+    // silently drop the just-picked photo (blob is not ready yet)
+    if (!place || !category || !verdict || saving || photo.compressing) return;
     setSaving(true);
     setError(false);
     try {

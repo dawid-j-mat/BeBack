@@ -17,6 +17,9 @@ Tworzy prywatny kubełek `photos` i reguły dostępu (RLS):
 
 Powinno zakończyć się bez błędów. Jeśli zobaczysz „bucket already exists" – to nic
 złego (wstawienie kubełka jest idempotentne); ważne, by przeszły cztery polityki.
+Gdyby SQL Editor odmówił przy politykach błędem `must be owner of table objects`
+(zdarza się na części projektów Supabase), te same cztery reguły wyklikuje się
+w panelu: **Storage → photos → Policies** – treść warunków jest w pliku migracji.
 
 ## 2. Sprawdzenie w aplikacji
 
