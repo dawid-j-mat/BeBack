@@ -287,3 +287,24 @@ a pinezka scala się od razu, jeszcze przed wysłaniem. Odrzucone: automatyczne
 łączenie po samej odległości (hotel obok kawiarni to nie to samo miejsce –
 o tożsamości decyduje człowiek) i większy promień (na gęstej ulicy pytanie
 padałoby przy co drugim dodaniu).
+
+**D-39 · Źródło miejsc przełącza administrator z apki; adminów pilnuje
+osobna tabela.** Przełącznik Google ↔ OSM przestaje wymagać redeployu
+(zmienna środowiskowa) czy komendy w adresie na każdym urządzeniu (D-28):
+jedno ustawienie w bazie (`app_settings`, dokładnie jeden wiersz –
+ograniczenie `check (id = 1)` uniemożliwia drugi) obowiązuje całe grono.
+Odczyt ma każdy zalogowany; zapis wyłącznie konta z tabeli `admins` –
+tabela nie ma żadnych polityk zapisu, więc admina można mianować tylko
+z panelu Supabase: o roli decyduje baza, nie frontend. Apka trzyma kopię
+ustawienia na urządzeniu (localStorage – działa offline i przed
+odpowiedzią serwera, wzorzec z języka D-37); pozostałe urządzenia
+przejmują zmianę przy następnym starcie apki, bez nasłuchu realtime
+(prostota adekwatna do dwóch kont). Kolejność wyboru źródła: przypięcie
+`?places=` (narzędzie testowe, świadomie wygrywa) → ustawienie admina
+(`auto` przepuszcza dalej) → `VITE_PLACES_PROVIDER` → automatyka z D-25.
+Przełącznik mieszka w arkuszu podpisu (D-37) i widzi go tylko admin –
+u pozostałych arkusz wygląda jak dotąd. Odrzucone: kolumna `is_admin`
+w `profiles` (polityka „update own" pozwoliłaby każdemu mianować się
+adminem z konsoli przeglądarki; pilnowanie jednej kolumny wymagałoby
+triggera), UUID admina na sztywno w polityce SQL (zmiana admina =
+edycja polityki) oraz Supabase Realtime (zbędny przy dwóch kontach).
