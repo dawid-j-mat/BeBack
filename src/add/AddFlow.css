@@ -224,13 +224,15 @@
   height: 30px;
   color: var(--atrament);
 }
-.kafel:active {
+.kafel:active,
+.kafel.on {
   background: var(--atrament);
   color: var(--papier-jasny);
   transform: translateY(1px);
   box-shadow: 0 1px 0 rgba(38, 50, 77, 0.12);
 }
-.kafel:active svg {
+.kafel:active svg,
+.kafel.on svg {
   color: var(--papier-jasny);
 }
 
@@ -287,6 +289,15 @@
 .ocena-btn small {
   font-size: 12.5px;
   color: var(--atrament-70);
+}
+.ocena-btn.on {
+  background: var(--atrament);
+}
+.ocena-btn.on b {
+  color: var(--papier-jasny);
+}
+.ocena-btn.on small {
+  color: rgba(247, 241, 226, 0.65);
 }
 
 /* step 4: note, WOW, photo placeholder */

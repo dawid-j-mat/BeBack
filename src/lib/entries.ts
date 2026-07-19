@@ -82,6 +82,52 @@ export async function fetchEntries(): Promise<Entry[]> {
   });
 }
 
+// Editable fields of an entry (SPEC §3.1); RLS lets these calls touch only
+// the author's own rows, so no ownership checks client-side.
+export interface EntryPatch {
+  category: Category;
+  verdict: Verdict;
+  wow: boolean;
+  note: string;
+  visitedOn: string;
+  verdictChanged: boolean;
+}
+
+export async function updateEntry(id: string, patch: EntryPatch): Promise<void> {
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      category: patch.category,
+      verdict: patch.verdict,
+      wow: patch.wow,
+      note: patch.note,
+      visited_on: patch.visitedOn,
+      verdict_changed: patch.verdictChanged,
+    })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteEntry(id: string): Promise<void> {
+  const { error } = await supabase.from('entries').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// An empty body removes the note row; the author-only RLS policies on
+// private_notes (D-20) are the actual guard, not this code.
+export async function savePrivateNote(entryId: string, userId: string, body: string): Promise<void> {
+  const trimmed = body.trim();
+  if (trimmed) {
+    const { error } = await supabase
+      .from('private_notes')
+      .upsert({ entry_id: entryId, user_id: userId, body: trimmed });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from('private_notes').delete().eq('entry_id', entryId);
+    if (error) throw error;
+  }
+}
+
 export function useEntries(enabled: boolean) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const refresh = useCallback(() => {
