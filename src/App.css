@@ -15,6 +15,7 @@
 
 /* ---------- header ---------- */
 .top {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -82,6 +83,68 @@
   color: var(--atrament-70);
   transform: rotate(-2deg);
   padding: 8px;
+  min-height: 44px;
+}
+
+/* signature sheet: language + sign-out (D-21 grown up, still no settings screen) */
+.podpis-tlo {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+}
+.podpis-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 14px;
+  z-index: 9;
+  background: var(--papier-jasny);
+  border: 1px solid var(--atrament-45);
+  border-radius: var(--promien);
+  box-shadow: 0 3px 0 rgba(38, 50, 77, 0.15);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+}
+.podpis-jezyki {
+  display: flex;
+  gap: 8px;
+}
+.jezyk {
+  flex: 1;
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 12.5px;
+  background: var(--bialy);
+  border: 1px solid var(--atrament-45);
+  color: var(--atrament);
+  border-radius: 6px;
+  padding: 9px 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
+  min-height: 44px;
+}
+.jezyk.on {
+  background: var(--atrament);
+  color: var(--papier-jasny);
+  border-color: var(--atrament);
+}
+.podpis-wyloguj {
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border-top: 1px dashed var(--atrament-45);
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  color: var(--atrament-70);
+  padding: 12px 4px 4px;
+  cursor: pointer;
+  text-align: left;
   min-height: 44px;
 }
 
