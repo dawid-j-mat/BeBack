@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import './AddFlow.css';
 import { getPosition, type GeoPosition } from '../lib/geolocation';
-import type { PlaceCandidate } from '../lib/places';
+import { distanceMeters, type PlaceCandidate } from '../lib/places';
+import type { EntryPlace } from '../lib/entries';
 import { t, formatVisitDate } from '../i18n';
 import { StepPlace } from './StepPlace';
 import { StepCategory, type Category } from './StepCategory';
@@ -16,14 +17,30 @@ import { todayLocal } from '../lib/dates';
 interface AddFlowProps {
   userId: string;
   authorName: string;
+  // Places already on the server - the "same place?" link check (SPEC §3.1)
+  // runs against these, so two-in-one venues share one pin (D-27).
+  knownPlaces: EntryPlace[];
   onClose: () => void;
   onSaved?: (entryId: string) => void;
 }
 
-export function AddFlow({ userId, authorName, onClose, onSaved }: AddFlowProps) {
+// Two picks this close together are probably the same physical spot - close
+// enough for a hotel and its restaurant, far enough not to fire for the
+// venue next door on a dense street.
+const LINK_RADIUS_M = 50;
+
+function sameName(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+export function AddFlow({ userId, authorName, knownPlaces, onClose, onSaved }: AddFlowProps) {
   const [step, setStep] = useState(1);
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [place, setPlace] = useState<PlaceCandidate | null>(null);
+  const [linkedPlaceId, setLinkedPlaceId] = useState<string | null>(null);
+  const [linkAsk, setLinkAsk] = useState<{ candidate: PlaceCandidate; match: EntryPlace } | null>(
+    null,
+  );
   const [category, setCategory] = useState<Category | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [wow, setWow] = useState(false);
@@ -36,6 +53,31 @@ export function AddFlow({ userId, authorName, onClose, onSaved }: AddFlowProps) 
   useEffect(() => {
     getPosition().then(setPosition).catch(() => setPosition(null));
   }, []);
+
+  // A picked candidate lands on step 2 directly, via a silent link (same name
+  // nearby = the very venue the user already has) or via the "same place?"
+  // question when a known place sits within LINK_RADIUS_M under another name.
+  function handlePick(candidate: PlaceCandidate) {
+    let match: EntryPlace | null = null;
+    let best = LINK_RADIUS_M;
+    for (const known of knownPlaces) {
+      const d = distanceMeters(candidate, known);
+      if (d <= best) {
+        best = d;
+        match = known;
+      }
+    }
+    if (!match) acceptPlace(candidate, null);
+    else if (sameName(match.name, candidate.name)) acceptPlace(candidate, match.id);
+    else setLinkAsk({ candidate, match });
+  }
+
+  function acceptPlace(candidate: PlaceCandidate, existingPlaceId: string | null) {
+    setPlace(candidate);
+    setLinkedPlaceId(existingPlaceId);
+    setLinkAsk(null);
+    setStep(2);
+  }
 
   // Stamping writes to the local outbox only - even online (outbox-first,
   // D-33): the stamp lands instantly with or without signal, and the sync
@@ -52,6 +94,7 @@ export function AddFlow({ userId, authorName, onClose, onSaved }: AddFlowProps) 
       await outboxAdd({
         entryId,
         placeId: crypto.randomUUID(),
+        existingPlaceId: linkedPlaceId,
         userId,
         authorName,
         place,
@@ -116,14 +159,30 @@ export function AddFlow({ userId, authorName, onClose, onSaved }: AddFlowProps) 
         ))}
       </div>
 
-      {step === 1 && (
-        <StepPlace
-          position={position}
-          onPick={(p) => {
-            setPlace(p);
-            setStep(2);
-          }}
-        />
+      {step === 1 && <StepPlace position={position} onPick={handlePick} />}
+
+      {linkAsk && (
+        <div className="laczenie-tlo">
+          <div className="laczenie">
+            <p>{t('to_samo_pyt').replace('{name}', linkAsk.match.name)}</p>
+            <div className="laczenie-przyciski">
+              <button
+                type="button"
+                className="btn laczenie-tak"
+                onClick={() => acceptPlace(linkAsk.candidate, linkAsk.match.id)}
+              >
+                {t('to_samo_tak')}
+              </button>
+              <button
+                type="button"
+                className="btn cichy"
+                onClick={() => acceptPlace(linkAsk.candidate, null)}
+              >
+                {t('to_samo_nie')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {step === 2 && place && (
         <StepCategory

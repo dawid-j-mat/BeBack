@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { useSession } from './auth/useSession';
 import { saveProfileLang, useProfile } from './auth/useProfile';
@@ -11,7 +11,7 @@ import { AddFlow } from './add/AddFlow';
 import { EditEntry } from './edit/EditEntry';
 import { Journal } from './journal/Journal';
 import { useOfflineEntries } from './lib/sync';
-import type { Entry } from './lib/entries';
+import { groupByPlace, type Entry } from './lib/entries';
 
 export default function App() {
   const session = useSession();
@@ -22,6 +22,13 @@ export default function App() {
   const userId = session?.user.id ?? null;
   const { displayName, profileLang } = useProfile(userId);
   const { entries, refresh } = useOfflineEntries(userId);
+
+  // Server-side places only: an entry cannot link to a place that is still
+  // waiting in the outbox (its row does not exist for the FK yet).
+  const knownPlaces = useMemo(
+    () => groupByPlace(entries.filter((entry) => !entry.pending)).map((group) => group.place),
+    [entries],
+  );
 
   // Language state lives here so changing it re-renders the whole tree; the
   // value itself is held by src/i18n (device copy) and the profile row.
@@ -65,6 +72,7 @@ export default function App() {
         <AddFlow
           userId={session.user.id}
           authorName={displayName}
+          knownPlaces={knownPlaces}
           onClose={() => setAdding(false)}
           onSaved={(entryId) => {
             setFreshEntryId(entryId);
