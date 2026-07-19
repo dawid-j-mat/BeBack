@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import { useSession } from './auth/useSession';
+import { useDisplayName } from './auth/useDisplayName';
 import { LoginScreen } from './auth/LoginScreen';
 import { TopBar } from './components/TopBar';
 import { MapView } from './components/MapView';
@@ -8,7 +9,8 @@ import { BottomNav, type AppView } from './components/BottomNav';
 import { AddFlow } from './add/AddFlow';
 import { EditEntry } from './edit/EditEntry';
 import { Journal } from './journal/Journal';
-import { useEntries, type Entry } from './lib/entries';
+import { useOfflineEntries } from './lib/sync';
+import type { Entry } from './lib/entries';
 
 export default function App() {
   const session = useSession();
@@ -16,7 +18,9 @@ export default function App() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Entry | null>(null);
   const [freshEntryId, setFreshEntryId] = useState<string | null>(null);
-  const { entries, refresh } = useEntries(Boolean(session));
+  const userId = session?.user.id ?? null;
+  const displayName = useDisplayName(userId);
+  const { entries, refresh } = useOfflineEntries(userId);
 
   if (session === undefined) return null; // checking stored session, avoid flicker
   if (!session) return <LoginScreen />;
@@ -24,7 +28,7 @@ export default function App() {
   return (
     <>
       <div className="lotniczy" />
-      <TopBar user={session.user} />
+      <TopBar displayName={displayName} />
       <main className="mapa-wrap">
         {/* The map stays mounted while the journal covers it: MapLibre is
             expensive to spin up and would lose its viewport on every switch. */}
@@ -42,11 +46,11 @@ export default function App() {
       {adding && (
         <AddFlow
           userId={session.user.id}
+          authorName={displayName}
           onClose={() => setAdding(false)}
           onSaved={(entryId) => {
             setFreshEntryId(entryId);
             setView('mapa'); // back to the map, where the new pin pulses (SPEC §3.2)
-            refresh();
           }}
         />
       )}
@@ -57,7 +61,7 @@ export default function App() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            refresh();
+            void refresh();
           }}
         />
       )}

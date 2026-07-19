@@ -8,6 +8,7 @@ import { PhotoField } from '../photo/PhotoField';
 import { CategoryTiles, type Category } from '../add/StepCategory';
 import { VerdictButtons } from '../add/StepVerdict';
 import type { Verdict } from '../lib/verdicts';
+import { todayLocal } from '../lib/dates';
 import { t } from '../i18n';
 
 interface EditEntryProps {
@@ -15,12 +16,6 @@ interface EditEntryProps {
   userId: string;
   onClose: () => void;
   onSaved: () => void;
-}
-
-function todayLocal(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 // Editing is a correction, not a re-run of the 45-second flow, so everything

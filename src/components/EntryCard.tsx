@@ -38,7 +38,8 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
   const visited = new Date(`${entry.visitedOn}T12:00:00`);
 
   // The bucket is private (D-32), so each photo is shown through a short-lived
-  // signed URL fetched when the visible entry changes.
+  // signed URL fetched when the visible entry changes. An entry still waiting
+  // in the offline outbox shows its local blob instead (SPEC §3.5).
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +53,7 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
       cancelled = true;
     };
   }, [entry.photoPath]);
+  const shownPhoto = entry.pending ? (entry.pendingPhotoUrl ?? null) : photoUrl;
 
   return (
     <>
@@ -67,13 +69,13 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
               date={formatVisitDate(visited)}
             />
           </div>
-          {photoUrl && (
+          {shownPhoto && (
             <div className="foto foto-karta">
               <span className="naroznik n1" aria-hidden="true" />
               <span className="naroznik n2" aria-hidden="true" />
               <span className="naroznik n3" aria-hidden="true" />
               <span className="naroznik n4" aria-hidden="true" />
-              <img src={photoUrl} alt="" />
+              <img src={shownPhoto} alt="" />
               <span className="podpis-foto">{t('foto_podpis')}</span>
             </div>
           )}
@@ -121,10 +123,19 @@ export function EntryCard({ group, currentUserId, onEdit, onClose, initialEntryI
             <span className="data-reka">{formatVisitDate(visited)}</span>
             <span className="meta-prawa">
               <span className="podpis-reka">{entry.authorName}</span>
-              {entry.userId === currentUserId && (
-                <button type="button" className="btn-maly" onClick={() => onEdit(entry)}>
-                  {t('edytuj')}
-                </button>
+              {/* An outbox entry has no server row yet, so editing waits for
+                  the sync; the chip explains why in place of the button. */}
+              {entry.pending ? (
+                <span className="chip-sync">
+                  <i aria-hidden="true" />
+                  {t('sync_czeka')}
+                </span>
+              ) : (
+                entry.userId === currentUserId && (
+                  <button type="button" className="btn-maly" onClick={() => onEdit(entry)}>
+                    {t('edytuj')}
+                  </button>
+                )
               )}
             </span>
           </div>

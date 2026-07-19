@@ -366,3 +366,37 @@
   stroke-width: 2.6;
   stroke-linecap: round;
 }
+
+/* ---------- offline sync chip (prototype .chip-sync) ---------- */
+/* On journal rows and the entry card while an entry waits in the outbox. */
+.chip-sync {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px dashed var(--atrament-45);
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: var(--atrament-70);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+.chip-sync i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--olowek);
+  animation: chip-mig 1.4s infinite;
+}
+@keyframes chip-mig {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip-sync i {
+    animation: none;
+  }
+}
