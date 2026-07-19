@@ -29,6 +29,10 @@ export interface Entry {
   authorName: string;
   privateNote: string | null;
   place: EntryPlace;
+  // Set only for entries still waiting in the offline outbox (SPEC §3.5):
+  // the photo shows from a local object URL until the blob is uploaded.
+  pending?: boolean;
+  pendingPhotoUrl?: string | null;
 }
 
 interface RawEntry {
@@ -141,16 +145,41 @@ export async function savePrivateNote(entryId: string, userId: string, body: str
   }
 }
 
-export function useEntries(enabled: boolean) {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const refresh = useCallback(() => {
-    fetchEntries()
-      .then(setEntries)
-      .catch((err) => console.error('[beback] entries fetch failed:', err));
-  }, []);
+// The last successful fetch is kept in localStorage so the map and journal
+// open with content offline. Keyed per user: two accounts share a device
+// during tests (D-21) and one must never see the other's private notes.
+function cacheKey(userId: string): string {
+  return `beback:entries:${userId}`;
+}
+
+function readCachedEntries(userId: string): Entry[] {
+  try {
+    const raw = localStorage.getItem(cacheKey(userId));
+    return raw ? (JSON.parse(raw) as Entry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function useEntries(userId: string | null) {
+  const [entries, setEntries] = useState<Entry[]>(() => (userId ? readCachedEntries(userId) : []));
+  const refresh = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const fresh = await fetchEntries();
+      setEntries(fresh);
+      try {
+        localStorage.setItem(cacheKey(userId), JSON.stringify(fresh));
+      } catch {
+        // best-effort cache; a full localStorage must not break the fetch
+      }
+    } catch (err) {
+      console.error('[beback] entries fetch failed:', err); // offline: cache stays
+    }
+  }, [userId]);
   useEffect(() => {
-    if (enabled) refresh();
-  }, [enabled, refresh]);
+    if (userId) void refresh();
+  }, [userId, refresh]);
   return { entries, refresh };
 }
 

@@ -118,6 +118,12 @@ export function Journal({ entries, currentUserId, onEdit }: JournalProps) {
                         {entry.place.city ? `${entry.place.city} · ` : ''}
                         {t(CATEGORY_KEY[entry.category])}
                       </small>
+                      {entry.pending && (
+                        <span className="chip-sync">
+                          <i aria-hidden="true" />
+                          {t('sync_czeka')}
+                        </span>
+                      )}
                     </span>
                     <span className="data">{formatShortDate(visited)}</span>
                   </button>

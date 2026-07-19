@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import './AddFlow.css';
-import { supabase } from '../lib/supabase';
 import { getPosition, type GeoPosition } from '../lib/geolocation';
 import type { PlaceCandidate } from '../lib/places';
 import { t, formatVisitDate } from '../i18n';
@@ -11,16 +10,17 @@ import { StepNote } from './StepNote';
 import { Przybicie } from './Przybicie';
 import type { Verdict } from '../lib/verdicts';
 import { usePhotoPick } from '../photo/usePhotoPick';
-import { uploadPhoto } from '../lib/photos';
-import { setEntryPhotoPath } from '../lib/entries';
+import { outboxAdd } from '../lib/outbox';
+import { todayLocal } from '../lib/dates';
 
 interface AddFlowProps {
   userId: string;
+  authorName: string;
   onClose: () => void;
   onSaved?: (entryId: string) => void;
 }
 
-export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
+export function AddFlow({ userId, authorName, onClose, onSaved }: AddFlowProps) {
   const [step, setStep] = useState(1);
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [place, setPlace] = useState<PlaceCandidate | null>(null);
@@ -32,46 +32,15 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
   const [saving, setSaving] = useState(false);
   const [stamped, setStamped] = useState(false);
   const [error, setError] = useState(false);
-  const [photoWarn, setPhotoWarn] = useState(false);
 
   useEffect(() => {
     getPosition().then(setPosition).catch(() => setPosition(null));
   }, []);
 
-  async function findOrCreatePlace(candidate: PlaceCandidate): Promise<string> {
-    // Dedupe by whichever external id the candidate carries (Google or OSM);
-    // manual places have neither and always create a fresh row.
-    const externalId = candidate.googlePlaceId
-      ? { column: 'google_place_id', value: candidate.googlePlaceId }
-      : candidate.osmId
-        ? { column: 'osm_id', value: candidate.osmId }
-        : null;
-    if (externalId) {
-      const { data } = await supabase
-        .from('places')
-        .select('id')
-        .eq(externalId.column, externalId.value)
-        .maybeSingle();
-      if (data) return data.id as string;
-    }
-    const { data, error: insertError } = await supabase
-      .from('places')
-      .insert({
-        google_place_id: candidate.googlePlaceId,
-        osm_id: candidate.osmId,
-        name: candidate.name,
-        city: candidate.city,
-        country: candidate.country,
-        lat: candidate.lat,
-        lng: candidate.lng,
-        created_by: userId,
-      })
-      .select('id')
-      .single();
-    if (insertError) throw insertError;
-    return data.id as string;
-  }
-
+  // Stamping writes to the local outbox only - even online (outbox-first,
+  // D-33): the stamp lands instantly with or without signal, and the sync
+  // engine (src/lib/sync.ts) delivers the entry and its photo in the
+  // background. Ids are generated here so they survive the sync unchanged.
   async function save() {
     // photo.compressing guards the race where stamping mid-compression would
     // silently drop the just-picked photo (blob is not ready yet)
@@ -79,35 +48,21 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
     setSaving(true);
     setError(false);
     try {
-      const placeId = await findOrCreatePlace(place);
-      const { data: entryData, error: entryError } = await supabase
-        .from('entries')
-        .insert({
-          user_id: userId,
-          place_id: placeId,
-          category,
-          verdict,
-          wow,
-          note: note.trim(),
-        })
-        .select('id')
-        .single();
-      if (entryError) throw entryError;
-      const entryId = entryData.id as string;
-
-      // The photo is optional (SPEC §3.1): if the upload fails the entry still
-      // stands, so we warn and stamp anyway rather than losing the whole visit.
-      if (photo.blob) {
-        try {
-          const path = await uploadPhoto(userId, entryId, photo.blob);
-          await setEntryPhotoPath(entryId, path);
-        } catch (photoErr) {
-          console.error('[beback] photo upload failed:', photoErr);
-          setPhotoWarn(true);
-          await new Promise((r) => setTimeout(r, 1600)); // let the warning be seen
-        }
-      }
-
+      const entryId = crypto.randomUUID();
+      await outboxAdd({
+        entryId,
+        placeId: crypto.randomUUID(),
+        userId,
+        authorName,
+        place,
+        category,
+        verdict,
+        wow,
+        note: note.trim(),
+        visitedOn: todayLocal(),
+        photo: photo.blob,
+        createdAt: Date.now(),
+      });
       setStamped(true);
       onSaved?.(entryId);
     } catch (err) {
@@ -208,7 +163,6 @@ export function AddFlow({ userId, onClose, onSaved }: AddFlowProps) {
       )}
 
       <div className={`toast${error ? ' on' : ''}`}>{t('zapis_blad')}</div>
-      <div className={`toast${photoWarn ? ' on' : ''}`}>{t('foto_blad')}</div>
     </div>
   );
 }

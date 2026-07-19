@@ -1,0 +1,22 @@
+.nowa-wersja {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--atrament);
+  color: var(--papier-jasny);
+  font-size: 13px;
+  padding: 8px 10px 8px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 0 rgba(38, 50, 77, 0.25);
+  white-space: nowrap;
+}
+.nowa-wersja .btn-maly {
+  min-height: 36px;
+  padding: 6px 12px;
+  box-shadow: none;
+}

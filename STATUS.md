@@ -88,6 +88,59 @@
     pełny obieg wyboru pliku → kompresja w przeglądarce dała **255 KB**
     z testowego 2400×1600.
 
+## Zrobione (sesja 5, lipiec 2026)
+
+- **Plaster 7** – offline-first (SPEC §3.5):
+  - **Skrytka (outbox)** w IndexedDB (`src/lib/outbox.ts`, D-33): każde
+    przybicie pieczątki – także online – zapisuje wpis ze zdjęciem (blob)
+    lokalnie i od razu stempluje; identyfikatory wpisu i miejsca generuje
+    klient (`crypto.randomUUID()`), więc synchronizacja jest idempotentna,
+    a id nie zmienia się po dotarciu na serwer. Data wizyty zapisywana
+    w chwili przybicia (nie „dzisiaj" z bazy przy późniejszym sync).
+  - **Synchronizacja w tle** (`src/lib/sync.ts`): kolejka opróżniana
+    najstarsze-najpierw przy starcie apki, powrocie sieci (`online`),
+    powrocie karty i po każdym przybiciu; błąd przerywa i czeka na następną
+    okazję; `findOrCreatePlace` przeniesione tu z AddFlow (dedupe bez zmian).
+    Hook `useOfflineEntries` skleja wpisy z serwera i ze skrytki – oczekujący
+    wpis znika z listy dopiero, gdy jest już w odświeżonej liście z serwera
+    (pinezka nie mruga).
+  - **Wskaźnik „Czeka na wysłanie"** (`.chip-sync` z prototypu): w wierszu
+    dziennika i na karcie wpisu (tam w miejscu przycisku „Edytuj" – edycja
+    czeka na synchronizację); kropka nie miga przy `prefers-reduced-motion`.
+  - **Wpisy widoczne offline**: ostatnia udana lista wpisów w localStorage
+    per użytkownik (`beback:entries:{userId}` – dwa konta na jednym
+    urządzeniu nie widzą swoich notatek prywatnych, D-20/D-21); zdjęcie
+    oczekującego wpisu z lokalnego bloba; cudze zdjęcia offline niedostępne
+    (podpisane URL-e wymagają sieci – świadome ograniczenie).
+  - **Cache mapy i fontów** (D-35, `vite.config.ts`): kafelki + glyphy
+    OpenFreeMap CacheFirst (600 wpisów / 30 dni), Google Fonts SWR + rok;
+    Supabase świadomie poza cache SW. Brak kafelków nie blokuje dodania
+    wpisu (mapa = czysty papier, GPS działa).
+  - **Sygnał nowej wersji** (D-34): `registerType: 'prompt'` + pasek
+    „Jest nowa wersja / Odśwież" (`src/components/UpdateToast.tsx`)
+    zamiast autoUpdate z backlogu.
+  - **Kompresja zdjęć – fallback na canvasie** (`src/lib/photo.ts`): gdy
+    leniwie ładowany chunk `browser-image-compression` jest niedostępny
+    (offline zanim precache się dopełnił), zdjęcie i tak schodzi ≤ 300 KB.
+  - Drobne: `todayLocal()` wydzielone do `src/lib/dates.ts`; podpis autora
+    przez `useDisplayName` (cache w localStorage – działa offline);
+    `TopBar` dostaje nazwę propem; toast „foto się nie udało" usunięty
+    z dodawania (upload w tle sam się ponawia).
+  - **Zero migracji bazy i zmian w RLS.**
+  - Weryfikacja E2E w Chromium (~390 px, preview build, headless):
+    offline od startu → pełny przepływ z zdjęciem 398 KB (canvas-fallback
+    → 147 KB w skrytce), pieczątka natychmiast, pinezka na mapie bez
+    kafelków, chip w dzienniku i na karcie, karta ze zdjęciem z bloba;
+    przeładowanie apki offline (service worker + skrytka) – wpis nadal
+    jest; powrót sieci przy niedostępnym Supabase – kolejka zostaje
+    i ponawia (bez duplikatów dzięki client-side id). Realny sync na
+    produkcyjnym Supabase sprawdzi Dawid.
+- **Pytanie o 300 KB** (z odbioru plastra 6): darmowy plan Supabase to
+  1 GB Storage (≈ 3 400 zdjęć po 300 KB – lata użytku przy 2 kontach)
+  i 5 GB/mies. transferu (≈ 17 tys. wyświetleń zdjęć). Limit zostaje;
+  gdyby kiedyś było ciasno, pierwszy ruch to `MAX_EDGE` 1920 → 1600
+  w `src/lib/photo.ts`, nie niższy próg KB.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -118,29 +171,31 @@ Zaległe z wcześniejszych plastrów (jeśli jeszcze nierobione):
 
 - Wbudowana poczta Supabase: limit 2 maile logowania/h – docelowo własny SMTP
   (np. Resend, darmowy próg).
-- Aktualizacja PWA wymaga zamknięcia kart apki (autoUpdate podmienia wersję
-  przy kolejnym wejściu); w plastrze 7 dodać sygnał „jest nowa wersja".
 - Etykiety mapy w Noto Sans (glyphy OpenFreeMap); Domine/Karla wymagałyby
   własnego hostingu glyphów – rozważyć w plastrze 8.
-- Bundle główny ~1,48 MB (403 KB gzip; głównie MapLibre) – biblioteka
-  kompresji zdjęć już wydzielona do osobnego chunku (D-31); sam MapLibre do
-  ewentualnego code-splittingu przy plastrze 7.
+- Code-splitting MapLibre odrzucony (D-35): mapa jest pierwszym ekranem,
+  wydzielenie tylko opóźniałoby treść główną; od drugiego otwarcia bundle
+  i tak idzie z precache service workera.
+- Edycja/usuwanie wpisu wymaga sieci (offline objęte jest tylko dodawanie –
+  zakres SPEC §3.5); przy braku zasięgu edycja kończy się dzisiejszym
+  toastem błędu. Ewentualne rozszerzenie kolejki o edycje – backlog.
 - Publiczne serwery Overpass/Photon bywają obciążone – zapytania mają timeout
   6 s; gdyby to przeszkadzało w praktyce, rozważyć mirror Overpass
-  (kumi.systems) jako drugi adres.
+  (kumi.systems) jako drugi adres. Offline „W pobliżu" nie działa (to sieć),
+  ale ścieżka „Dodaj miejsce, w którym jestem" (GPS) działa bez zasięgu.
 - DESIGN §2 wymienia „filtr nieaktywny" wśród elementów z przerywaną ramką,
   ale prototyp rysuje filtr ciągłą – zrobione wg prototypu (źródło prawdy);
   wyjaśnić z Dawidem przy szlifie w plastrze 8.
 
-## Następny krok: plaster 7 (nowa sesja)
+## Następny krok: plaster 8 (nowa sesja)
 
-Offline-first (SPEC §3.5, wymóg twardy pod Wyspy Owcze): service worker +
-kolejka w IndexedDB, dodawanie wpisu ze zdjęciem działa bez sieci, sync w tle
-po powrocie zasięgu, dyskretny wskaźnik „Czeka na wysłanie" przy niezsynchroni-
-zowanych wpisach (styl `.chip-sync` jest w prototypie), kafelki mapy z cache.
-Przy okazji: sygnał „jest nowa wersja" PWA (dziś autoUpdate po zamknięciu kart)
-i ewentualny code-splitting MapLibre. Uwaga projektowa: kolejka offline musi
-objąć też upload zdjęcia (blob w IndexedDB do czasu sync).
+Dwujęzyczność z profilu użytkownika (dziś język idzie za przeglądarką;
+słownik PL/EN jest kompletny od plastra 1), powiązywanie wpisów w tym samym
+miejscu („to samo miejsce?" przy dodawaniu – fundament z D-27 już stoi)
+i szlif animacji. Do rozstrzygnięcia przy okazji: glyphy Domine/Karla na
+mapie i sprawa „filtra nieaktywnego" (punkty z backlogu wyżej).
+Przed plastrem 8: tydzień testów na spacerach po Katowicach (SPEC §7) –
+w tym test trybu samolotowego z plastra 7.
 
 ## Stan odbioru
 
@@ -150,10 +205,14 @@ Plaster 4 czeka na odbiór: wymaga migracji `osm_id` (punkt wyżej); weryfikacja
 wizualna zrobiona na danych zaślepkowych w Chromium (pinezki, klastry, karta,
 filtr, RLS notatki po stronie UI) – realne dane sprawdzi Dawid na preview.
 Plaster 5 odebrany i zmergowany (PR #6).
-Plaster 6 czeka na odbiór: wymaga założenia kubełka `photos` (punkt 1 „Do
-zrobienia ręcznie", `docs/photos.md`); weryfikacja wizualna na zaślepkach
-w Chromium (karta ze zdjęciem, edycja: dodanie/wymiana/usunięcie, kompresja
-2400×1600 → 255 KB). Realny upload, podpisany URL i obrót EXIF zdjęcia
-z telefonu sprawdzi Dawid na preview. Zdjęcia dzieli całe grono (odczyt),
-zapis tylko autor – po założeniu kubełka warto zerknąć na dwóch kontach,
-że jedno konto nie może nadpisać zdjęcia drugiego (reguły Storage z D-32).
+Plaster 6 odebrany (PR #7); plastry 1–6 przetestowane przez Dawida na
+produkcji (komputer; telefon jeszcze nie).
+Plaster 7 czeka na odbiór – żadnych kroków ręcznych (zero migracji).
+Scenariusz odbioru u Dawida: (1) otworzyć apkę online, chwilę odczekać
+(service worker dociąga cache), (2) tryb samolotowy → dodać wpis ze
+zdjęciem → pieczątka od razu, pinezka na mapie, chip „Czeka na wysłanie"
+w dzienniku i na karcie, (3) przeładować apkę dalej offline – wpis ma
+zostać, (4) wyłączyć tryb samolotowy → chip powinien zniknąć sam (chwila),
+wpis i zdjęcie widoczne w Supabase, (5) po następnym deployu sprawdzić
+pasek „Jest nowa wersja". Najlepiej na telefonie – to jest właściwy test
+plastra 7.

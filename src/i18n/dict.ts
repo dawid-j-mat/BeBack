@@ -69,6 +69,9 @@ export const dict = {
     usun_wpis: 'Usuń wpis',
     usun_pytanie: 'Usunąć ten wpis?',
     werdykt_zmieniony: 'werdykt zmieniony',
+    sync_czeka: 'Czeka na wysłanie',
+    nowa_wersja: 'Jest nowa wersja',
+    odswiez: 'Odśwież',
   },
   en: {
     nav_mapa: 'Map',
@@ -138,6 +141,9 @@ export const dict = {
     usun_wpis: 'Delete entry',
     usun_pytanie: 'Delete this entry?',
     werdykt_zmieniony: 'verdict changed',
+    sync_czeka: 'Waiting to send',
+    nowa_wersja: 'A new version is ready',
+    odswiez: 'Refresh',
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 
