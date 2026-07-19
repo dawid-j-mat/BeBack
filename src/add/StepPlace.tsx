@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GeoPosition } from '../lib/geolocation';
 import { searchNearby, searchText, type PlaceCandidate } from '../lib/places';
 import { t } from '../i18n';
+
+// Nearby suggestions can genuinely be empty (nothing around) or can fail
+// (provider down); the two must not look the same on screen - the silent
+// failure was indistinguishable from "no places here" and cost us a bug hunt.
+type NearbyStatus = 'loading' | 'ok' | 'error';
 
 interface StepPlaceProps {
   position: GeoPosition | null;
@@ -17,16 +22,26 @@ export function StepPlace({ position, onPick }: StepPlaceProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceCandidate[]>([]);
   const [nearby, setNearby] = useState<PlaceCandidate[]>([]);
+  const [nearbyStatus, setNearbyStatus] = useState<NearbyStatus>('loading');
   const [manualOpen, setManualOpen] = useState(false);
   const [manualName, setManualName] = useState('');
   const debounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
+  const loadNearby = useCallback(() => {
     if (!position) return;
+    setNearbyStatus('loading');
     searchNearby(position)
-      .then(setNearby)
-      .catch((err) => console.error('[beback] nearby search failed:', err));
+      .then((found) => {
+        setNearby(found);
+        setNearbyStatus('ok');
+      })
+      .catch((err) => {
+        console.error('[beback] nearby search failed:', err);
+        setNearbyStatus('error');
+      });
   }, [position]);
+
+  useEffect(loadNearby, [loadNearby]);
 
   useEffect(() => {
     clearTimeout(debounce.current);
@@ -87,10 +102,21 @@ export function StepPlace({ position, onPick }: StepPlaceProps) {
           />
         </div>
 
-        {query.trim().length < 3 && position && nearby.length > 0 && (
+        {query.trim().length < 3 &&
+          position &&
+          (nearbyStatus === 'loading' || (nearbyStatus === 'ok' && nearby.length > 0)) && (
           <div className="pod-naglowek">
             <i className="gps" />
             <span>{t('w_poblizu')}</span>
+          </div>
+        )}
+
+        {query.trim().length < 3 && position && nearbyStatus === 'error' && (
+          <div className="poblizu-blad">
+            <span>{t('w_poblizu_blad')}</span>
+            <button type="button" className="btn-maly" onClick={loadNearby}>
+              {t('sprobuj_ponownie')}
+            </button>
           </div>
         )}
 

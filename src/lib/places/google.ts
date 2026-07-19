@@ -1,5 +1,5 @@
 import type { GeoPosition } from '../geolocation';
-import { distanceMeters, type PlaceCandidate } from './types';
+import { distanceMeters, NEARBY_LIMIT, NEARBY_RADIUS_M, type PlaceCandidate } from './types';
 
 // Google Places API (New) called straight from the browser (D-22).
 // The key is public but restricted to our domains and to this API.
@@ -67,10 +67,13 @@ function toCandidate(place: GooglePlace, from: GeoPosition | null): PlaceCandida
 export async function googleSearchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
   const places = await callPlaces('places:searchNearby', {
     languageCode: 'pl',
-    maxResultCount: 8,
+    maxResultCount: NEARBY_LIMIT,
     rankPreference: 'DISTANCE',
     locationRestriction: {
-      circle: { center: { latitude: position.lat, longitude: position.lng }, radius: 400 },
+      circle: {
+        center: { latitude: position.lat, longitude: position.lng },
+        radius: NEARBY_RADIUS_M,
+      },
     },
   });
   return places

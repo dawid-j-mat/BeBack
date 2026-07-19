@@ -111,6 +111,18 @@
     opacity: 0.35;
   }
 }
+/* nearby fetch failed – an honest state instead of a silent nothing */
+.poblizu-blad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-tekst);
+  font-size: 13px;
+  color: var(--atrament-70);
+  margin: 6px 2px 0;
+}
+
 .miejsce {
   display: flex;
   align-items: center;
