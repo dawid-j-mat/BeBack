@@ -308,3 +308,48 @@ w `profiles` (polityka „update own" pozwoliłaby każdemu mianować się
 adminem z konsoli przeglądarki; pilnowanie jednej kolumny wymagałoby
 triggera), UUID admina na sztywno w polityce SQL (zmiana admina =
 edycja polityki) oraz Supabase Realtime (zbędny przy dwóch kontach).
+
+**D-40 · WOW na mapie: złota poświata zamiast pieczęci-nalepki.** Feedback
+z pierwszych testów na telefonie: nalepka z gwiazdką była zbyt nachalna –
+przyciągała wzrok mocniej niż sama pinezka i psuła jej delikatny puls.
+Teraz WOW to cienki złoty pierścień wokół główki plus miękka złota łuna
+(CSS `drop-shadow` – zero dodatkowych elementów). Złoto pozostaje
+zarezerwowane wyłącznie dla WOW (D-13 co do zasady obowiązuje); datownik
+(„✳ WOW ✳") i mini-stempel w dzienniku bez zmian. Odrzucone: powrót do
+złotego asterysku przy główce (Dawid też nie był z niego zadowolony)
+i animowana poświata (odciągałaby uwagę od pulsu świeżo przybitej pinezki).
+
+**D-41 · Dwa dyskretne przyciski na mapie: „wróć do mnie" i „pokaż
+wszystko".** Prawy dolny róg, wzorzec znany z aplikacji map: celownik
+wraca do pozycji GPS (przybliżenie co najmniej 14 – jak przy starcie),
+ramka z kropką oddala mapę tak, żeby wszystkie pinezki po aktualnym
+filtrze zmieściły się w kadrze (`fitBounds`, maks. przybliżenie 15) –
+scenariusz „gdzie jedli znajomi na tej wycieczce we Włoszech". Przycisk
+„pokaż wszystko" znika, gdy nie ma żadnej pinezki. Odrzucone: gest palcem
+(nieodkrywalny – łamie zasadę oczywistego interfejsu) i pozycja w górnym
+rogu (kciuk go nie sięga, a róg jest blisko filtrów).
+
+**D-42 · „W pobliżu" zawężone do trzech kategorii; Overpass odporniejszy.**
+Google searchNearby bez filtra zwracał wszystko wokół – sklepy z odzieżą,
+biura, nazwane ulice; teraz dostaje `includedTypes` z listą typów
+odpowiadających naszym kategoriom (nocleg/jedzenie/atrakcja). Celowo
+`includedTypes`, nie `includedPrimaryTypes`: typ wtórny też łapie, więc
+hotel z restauracją pokaże się w obu światach – dokładnie tak, jak chce
+model dwóch wpisów (D-05). OSM filtr tagów miał od początku, ale jego
+„W pobliżu" psuły dwie rzeczy: (1) `out center tags` – tryb `tags`
+wycina współrzędne węzłów, więc lokale mapowane jako punkty (większość!)
+znikały z odpowiedzi – poprawione na `out center`; (2) instancje pytane
+po kolei – zajęta główna zjadała cały budżet czasu, zanim mirror dostał
+szansę – teraz obie ścigają się równolegle (`Promise.any`), a timeout
+wzrósł z 6 do 10 s. Dwa zapytania na dotknięcie to przy naszej skali
+żaden ciężar dla publicznych serwerów.
+
+**D-43 · Podpis użytkownika edytowalny w arkuszu podpisu.** Domyślna
+nazwa pochodzi z maila i nie zawsze jest imieniem i nazwiskiem, a cała
+idea zaufania wymaga wiedzy, kto dokładnie co poleca. „Zmień podpis"
+w arkuszu (dotknięcie podpisu w nagłówku) otwiera systemowy `prompt` –
+ten sam wzorzec co pytanie przy wylogowaniu (D-21); zapis jak przy języku
+(D-37): natychmiast lokalnie, w tle do `profiles.display_name`, więc
+podpis podąża za kontem. Odrzucone: osobny ekran profilu (MVP nadal nie
+ma ekranu ustawień) i wymuszanie formatu „Imię Nazwisko" (to umowa
+społeczna grona, nie walidacja).

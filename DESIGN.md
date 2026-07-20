@@ -63,9 +63,10 @@ Caveat nigdy do treści wpisów ani elementów wymagających szybkiego czytania.
    „BEBACK · MIEJSCE", w centrum werdykt (Domine) i data; kolor = kolor werdyktu;
    `mix-blend-mode: multiply`, lekki obrót (±8°). Generowany jako SVG – wzór w prototypie
    (`stampSVG`). WOW dodaje przerywany zewnętrzny pierścień i napis „★ WOW ★".
-3. **Asterysk WOW** – złoty asterysk (✳, --zloto), lekko obrócony, przy główce
-   pinezki na mapie i w rogu mini-stempla w dzienniku; na datowniku napis „✳ WOW ✳"
-   plus przerywany zewnętrzny pierścień. Jedyne użycie złota w całej apce.
+3. **Znak WOW** – na mapie: złota poświata wokół główki pinezki (cienki złoty
+   pierścień + miękka łuna, D-40); w dzienniku mały złoty znaczek w rogu
+   mini-stempla; na datowniku napis „✳ WOW ✳" plus przerywany zewnętrzny
+   pierścień. Jedyne użycie złota w całej apce.
 4. **FAB-pieczęć** – okrągły czerwony przycisk „+" z podwójnym pierścieniem,
    cieniem 3D i fizycznym wciśnięciem; ikona plus jako SVG (nigdy znak tekstowy).
 5. **Strona dziennika** – karta wpisu: taśma klejąca u góry, zdjęcie w białej ramce
