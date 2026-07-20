@@ -1,16 +1,28 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import type { PlacesSetting } from '../lib/appSettings';
 import { t, type Lang } from '../i18n';
 
 interface TopBarProps {
   displayName: string;
   lang: Lang;
   onLangChange: (lang: Lang) => void;
+  isAdmin: boolean;
+  placesSetting: PlacesSetting;
+  onPlacesSettingChange: (setting: PlacesSetting) => void;
 }
 
 // Tapping the handwritten signature opens a small sheet: language choice and
 // sign-out (grown out of D-21 - still no separate settings screen in the MVP).
-export function TopBar({ displayName, lang, onLangChange }: TopBarProps) {
+// Admins additionally get the circle-wide places source switch (D-39).
+export function TopBar({
+  displayName,
+  lang,
+  onLangChange,
+  isAdmin,
+  placesSetting,
+  onPlacesSettingChange,
+}: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function signOut() {
@@ -25,6 +37,11 @@ export function TopBar({ displayName, lang, onLangChange }: TopBarProps) {
   function pickLang(next: Lang) {
     setMenuOpen(false);
     onLangChange(next);
+  }
+
+  function pickSetting(next: PlacesSetting) {
+    setMenuOpen(false);
+    onPlacesSettingChange(next);
   }
 
   return (
@@ -66,6 +83,23 @@ export function TopBar({ displayName, lang, onLangChange }: TopBarProps) {
                 </button>
               ))}
             </div>
+            {isAdmin && (
+              <div className="podpis-zrodlo">
+                <span className="zrodlo-tytul">{t('zrodlo_miejsc')}</span>
+                <div className="zrodlo-przyciski">
+                  {(['auto', 'google', 'osm'] as const).map((setting) => (
+                    <button
+                      key={setting}
+                      type="button"
+                      className={`jezyk zrodlo${placesSetting === setting ? ' on' : ''}`}
+                      onClick={() => pickSetting(setting)}
+                    >
+                      {t(`zrodlo_${setting}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <button type="button" className="podpis-wyloguj" onClick={signOut}>
               {t('wyloguj')}
             </button>

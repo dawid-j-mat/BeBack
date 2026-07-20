@@ -18,6 +18,8 @@ declare
   test_place uuid;
   test_entry uuid;
   n int;
+  cur_provider text;
+  rows_touched int;
 begin
   select id into user_a from auth.users order by created_at limit 1;
   select id into user_b from auth.users order by created_at offset 1 limit 1;
@@ -83,10 +85,61 @@ begin
     raise exception 'FAIL: another user managed to modify the entry';
   end if;
 
+  -- ------------------------------------------------------------------
+  -- Plaster 9 (D-39): app settings writable only by admins.
+  -- Deterministic starting point: temporarily no admins at all
+  -- (superuser bypasses RLS; everything is rolled back at the end).
+  execute 'reset role';
+  delete from public.admins;
+
+  -- user B (non-admin) reads the setting but cannot change it
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_b, 'role', 'authenticated')::text, true);
+
+  select places_provider into cur_provider from public.app_settings where id = 1;
+  if cur_provider is null then
+    raise exception 'FAIL: signed-in user cannot read app settings';
+  end if;
+
+  update public.app_settings
+  set places_provider = case when cur_provider = 'osm' then 'google' else 'osm' end
+  where id = 1;
+  get diagnostics rows_touched = row_count;
+  if rows_touched <> 0 then
+    raise exception 'FAIL: non-admin changed app settings';
+  end if;
+
+  -- appoint user A as admin (superuser again, still inside the transaction)
+  execute 'reset role';
+  insert into public.admins (user_id) values (user_a);
+
+  -- membership is private: B sees no admin rows, not even A's
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_b, 'role', 'authenticated')::text, true);
+
+  select count(*) into n from public.admins;
+  if n <> 0 then
+    raise exception 'FAIL: user can see someone else''s admin membership';
+  end if;
+
+  -- the admin can change the setting
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_a, 'role', 'authenticated')::text, true);
+
+  update public.app_settings
+  set places_provider = case when cur_provider = 'osm' then 'google' else 'osm' end
+  where id = 1;
+  get diagnostics rows_touched = row_count;
+  if rows_touched <> 1 then
+    raise exception 'FAIL: admin cannot change app settings';
+  end if;
+
   raise notice 'RLS check: PASS';
 end;
 $$;
 
 rollback;
 
-select 'PASS – RLS dziala: wpisy widzi grono, notatki prywatne tylko autor' as wynik;
+select 'PASS – RLS dziala: wpisy widzi grono, notatki prywatne tylko autor, ustawienia zmienia tylko admin' as wynik;

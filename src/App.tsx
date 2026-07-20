@@ -11,6 +11,7 @@ import { AddFlow } from './add/AddFlow';
 import { EditEntry } from './edit/EditEntry';
 import { Journal } from './journal/Journal';
 import { useOfflineEntries } from './lib/sync';
+import { useAppSettings } from './lib/appSettings';
 import { groupByPlace, type Entry } from './lib/entries';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
   const userId = session?.user.id ?? null;
   const { displayName, profileLang } = useProfile(userId);
   const { entries, refresh } = useOfflineEntries(userId);
+  const { placesSetting, isAdmin, changePlacesSetting } = useAppSettings(userId);
 
   // Server-side places only: an entry cannot link to a place that is still
   // waiting in the outbox (its row does not exist for the FK yet).
@@ -53,7 +55,14 @@ export default function App() {
   return (
     <>
       <div className="lotniczy" />
-      <TopBar displayName={displayName} lang={lang} onLangChange={changeLang} />
+      <TopBar
+        displayName={displayName}
+        lang={lang}
+        onLangChange={changeLang}
+        isAdmin={isAdmin}
+        placesSetting={placesSetting}
+        onPlacesSettingChange={changePlacesSetting}
+      />
       <main className="mapa-wrap">
         {/* The map stays mounted while the journal covers it: MapLibre is
             expensive to spin up and would lose its viewport on every switch. */}

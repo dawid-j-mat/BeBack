@@ -1,4 +1,5 @@
 import type { GeoPosition } from '../geolocation';
+import { remotePlacesSetting } from '../appSettings';
 import { googleSearchNearby, googleSearchText, hasGoogleKey } from './google';
 import { osmSearchNearby, osmSearchText } from './osm';
 
@@ -24,8 +25,13 @@ if (urlCommand === 'osm' || urlCommand === 'google') {
 }
 
 function pickProvider(): Provider {
+  // The device pin stays a testing tool and deliberately beats everything,
+  // including the admin's circle-wide choice.
   const pinned = localStorage.getItem(OVERRIDE_KEY);
   if (pinned === 'google' || pinned === 'osm') return pinned;
+  // Admin's choice shared by the whole circle (D-39); 'auto' falls through.
+  const remote = remotePlacesSetting();
+  if (remote === 'google' || remote === 'osm') return remote;
   const forced = import.meta.env.VITE_PLACES_PROVIDER;
   if (forced === 'google' || forced === 'osm') return forced;
   return hasGoogleKey() ? 'google' : 'osm';

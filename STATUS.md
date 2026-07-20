@@ -170,6 +170,36 @@
     `prefers-reduced-motion` w `base.css` obejmuje też nowe elementy.
   - **Zero migracji bazy i zmian w RLS.**
 
+## Zrobione (sesja 7, lipiec 2026)
+
+- **Plaster 9** (pierwszy poza MVP, za zgodą Dawida) – przełącznik źródła
+  miejsc dla administratora (D-39):
+  - **Baza** (`supabase/migrations/2026-07_plaster9_app_settings.sql`,
+    dublowane w `schema.sql` dla świeżych projektów): tabela `admins`
+    (członkostwo czyta tylko właściciel, zapis wyłącznie z panelu Supabase –
+    zero polityk zapisu) i jednowierszowa `app_settings`
+    (`places_provider: auto|google|osm`, drugi wiersz niemożliwy przez
+    `check (id = 1)`); odczyt dla zalogowanych, update tylko dla adminów.
+  - **`rls_check.sql` rozszerzony**: nie-admin czyta ustawienie, ale go nie
+    zmieni; członkostwo adminów niewidoczne dla innych; admin zmienia.
+  - **Frontend**: `src/lib/appSettings.ts` (hook `useAppSettings` – pobiera
+    ustawienie i członkostwo przy starcie, kopia na urządzeniu
+    w localStorage `beback:places-provider-remote`, wzorzec języka D-37);
+    `pickProvider()` w `src/lib/places/index.ts` dostał nowy szczebel:
+    pin `?places=` (D-28, wygrywa) → ustawienie admina (`auto` przepuszcza)
+    → `VITE_PLACES_PROVIDER` → automatyka D-25.
+  - **UI**: arkusz podpisu (TopBar) u admina ma sekcję „Źródło miejsc"
+    z przyciskami Auto / Google / OSM (wzór przycisków języka); u nie-admina
+    arkusz bez zmian. Zmiana działa od razu na urządzeniu admina; pozostałe
+    urządzenia przejmują ją przy następnym starcie apki (bez realtime).
+  - Weryfikacja E2E w Chromium (~390 px, preview build, zaślepki Supabase
+    przez przechwycenie sieci): admin widzi i przełącza (PATCH
+    `places_provider=osm` + kopia lokalna), przy skonfigurowanym kluczu
+    Google ustawienie OSM kieruje „W pobliżu" do Overpass (Google 0 zapytań),
+    pin `?places=google` wygrywa z ustawieniem OSM, nie-admin sekcji nie
+    widzi, a ustawienie OSM i tak go obowiązuje. Realny RLS sprawdzi Dawid
+    (`rls_check.sql`).
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -184,10 +214,15 @@
 
 ## Do zrobienia ręcznie
 
-Plaster 8 nie wymaga żadnych kroków ręcznych (zero migracji bazy).
+Plaster 9 wymaga dwóch kroków w SQL Editorze Supabase:
+
+1. Uruchomić migrację `supabase/migrations/2026-07_plaster9_app_settings.sql`.
+2. Mianować siebie adminem (UUID konta: Authentication → Users):
+   `insert into public.admins (user_id) values ('<uuid>');`
+
 Uwaga przy odbiorze: jeśli któreś urządzenie ma przypięte źródło miejsc
-komendą `?places=` (D-28), przypięcie nadal obowiązuje – `?places=auto`
-przywraca automatykę (Google z zapasem OSM).
+komendą `?places=` (D-28), przypięcie nadal obowiązuje i wygrywa także
+z ustawieniem admina – `?places=auto` przywraca automatykę.
 
 ## Znane sprawy / backlog techniczny
 
@@ -205,21 +240,12 @@ przywraca automatykę (Google z zapasem OSM).
   6 s; „W pobliżu" próbuje kolejno overpass-api.de i mirrora kumi.systems
   (od sesji 6, D-36). Offline „W pobliżu" nie działa (to sieć), ale ścieżka
   „Dodaj miejsce, w którym jestem" (GPS) działa bez zasięgu.
-- **Przełącznik Google/OSM sterowany przez administratora z apki** – prośba
-  Dawida z sesji 6, do wdrożenia w plastrze 9. Szkic: tabela `app_settings`
-  (jeden wiersz, kolumna `places_provider: auto|google|osm`), RLS: odczyt
-  dla zalogowanych, zapis tylko dla konta admina (pilnuje baza, nie
-  frontend); apka czyta ustawienie przy starcie (z kopią w localStorage na
-  offline), przełączanie w arkuszu podpisu widoczne tylko dla admina.
-  Komenda `?places=` (D-28) zostaje jako narzędzie testowe per urządzenie.
+## Następny krok (nowa sesja)
 
-## Następny krok: plaster 9 (nowa sesja)
-
-Plastry 1–8 = pełny zakres MVP z SPEC §7. Przed wyjazdem: tydzień testów
-na spacerach (SPEC §7), w tym tryb samolotowy. Plaster 9 (pierwszy poza
-MVP, za zgodą Dawida): przełącznik dostawcy miejsc dla administratora
-(szkic w backlogu wyżej). W kolejce dalej: glyphy Domine/Karla na mapie
-(backlog wyżej) i backlog produktowy z SPEC §4.
+Plastry 1–8 = pełny zakres MVP z SPEC §7; plaster 9 (przełącznik dostawcy
+miejsc dla admina) domknięty w sesji 7. Przed wyjazdem: tydzień testów
+na spacerach (SPEC §7), w tym tryb samolotowy. W kolejce dalej: glyphy
+Domine/Karla na mapie (backlog wyżej) i backlog produktowy z SPEC §4.
 
 ## Stan odbioru
 
@@ -238,3 +264,11 @@ już jakiś jest (inna nazwa w promieniu 50 m) → pytanie „To samo miejsce
 co …?"; po „Tak, to samo" oba wpisy dzielą jedną pinezkę z przełączanymi
 kartami (licznik „1/2"); (4) sprawdzić, że werdykty/kategorie wyglądają
 jak dotąd (bez regresji).
+Plaster 9 czeka na odbiór – najpierw kroki ręczne (sekcja wyżej).
+Scenariusz odbioru: (1) w SQL Editorze uruchomić rozszerzony
+`rls_check.sql` – wynik PASS; (2) na koncie admina dotknąć podpisu →
+w arkuszu jest „Źródło miejsc"; przełączyć na OSM → podpowiedzi
+„W pobliżu" przychodzą z OSM (inny zestaw niż z Google); (3) na drugim
+koncie (telefon partnerki) po ponownym otwarciu apki podpowiedzi też
+z OSM, ale w arkuszu podpisu **nie ma** sekcji „Źródło miejsc";
+(4) wrócić na Auto na koncie admina.

@@ -52,6 +52,20 @@ VITE_SUPABASE_ANON_KEY=twoj_anon_key
 W Vercelu: **Project → Settings → Environment Variables** – dodaj te same dwie
 zmienne i zrób redeploy.
 
+## 6a. Administrator (od plastra 9)
+
+Na istniejącym projekcie uruchom w SQL Editorze migrację
+`supabase/migrations/2026-07_plaster9_app_settings.sql` (świeży projekt ma
+te tabele już w `schema.sql`). Potem mianuj admina – tylko konto z tabeli
+`admins` widzi w apce przełącznik „Źródło miejsc" i może go zmieniać:
+
+```sql
+insert into public.admins (user_id) values ('<uuid konta z Authentication → Users>');
+```
+
+Tabela `admins` nie ma żadnych polityk zapisu – admina da się mianować
+wyłącznie tutaj, nigdy z aplikacji.
+
 ## 7. Test końcowy plastra
 
 1. `git pull`, `npm run dev`, otwórz `http://localhost:5173`.
