@@ -7,6 +7,7 @@ interface TopBarProps {
   displayName: string;
   lang: Lang;
   onLangChange: (lang: Lang) => void;
+  onRename: (name: string) => void;
   isAdmin: boolean;
   placesSetting: PlacesSetting;
   onPlacesSettingChange: (setting: PlacesSetting) => void;
@@ -19,11 +20,21 @@ export function TopBar({
   displayName,
   lang,
   onLangChange,
+  onRename,
   isAdmin,
   placesSetting,
   onPlacesSettingChange,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // The default name comes from the e-mail, which is not always a real name;
+  // recommendations lean on knowing exactly who stands behind them, so the
+  // signature is editable (same confirm/prompt pattern as D-21).
+  function editName() {
+    setMenuOpen(false);
+    const next = window.prompt(t('podpis_pytanie'), displayName)?.trim();
+    if (next && next !== displayName) onRename(next);
+  }
 
   function signOut() {
     setMenuOpen(false);
@@ -71,6 +82,9 @@ export function TopBar({
         <>
           <div className="podpis-tlo" onClick={() => setMenuOpen(false)} />
           <div className="podpis-menu">
+            <button type="button" className="podpis-zmien" onClick={editName}>
+              {t('podpis_zmien')}
+            </button>
             <div className="podpis-jezyki">
               {(['pl', 'en'] as const).map((code) => (
                 <button

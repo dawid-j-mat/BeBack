@@ -28,23 +28,20 @@ function reducedMotion(): boolean {
 function pinSVG(verdict: Verdict, wow: boolean): string {
   const fill = VERDICT_COLOR[verdict];
   const rim = VERDICT_RIM[verdict];
-  // Pushpin from the prototype: shadow ellipse, leg, head with a highlight;
-  // WOW adds the gold sticker-asterisk beside the head (D-13).
-  const wowBadge = wow
-    ? `<g transform="translate(34,7)">
-        <circle r="8.5" fill="none" stroke="#8F7318" stroke-width="2.4" stroke-dasharray="0.5 3" stroke-linecap="round"/>
-        <circle r="6.8" fill="#B8860B" stroke="#8F7318" stroke-width="1"/>
-        <path d="M0,-3.6 L1.1,-1.1 L3.8,-1.1 L1.6,0.6 L2.4,3.2 L0,1.7 L-2.4,3.2 L-1.6,0.6 L-3.8,-1.1 L-1.1,-1.1 Z" fill="#FFF8E6"/>
-      </g>`
+  // Pushpin from the prototype: shadow ellipse, leg, head with a highlight.
+  // WOW is a quiet gold halo around the head (D-40): a thin ring in the SVG
+  // for definition, the soft outer glow comes from CSS on `.pinezka.wow`.
+  const wowRing = wow
+    ? `<circle cx="18" cy="18" r="12.6" fill="none" stroke="#B8860B" stroke-width="1.6" opacity=".85"/>`
     : '';
   return `<svg viewBox="0 0 48 42" aria-hidden="true">
     <ellipse cx="18" cy="39" rx="7" ry="2.5" fill="#26324D" opacity=".18"/>
     <line x1="16" y1="36" x2="18" y2="24" stroke="#26324D" stroke-width="1.6"/>
     <g class="glowka">
+      ${wowRing}
       <circle cx="18" cy="18" r="10" fill="${fill}" stroke="${rim}" stroke-width="1.5"/>
       <circle cx="15" cy="15" r="3" fill="#fff" opacity=".4"/>
     </g>
-    ${wowBadge}
   </svg>`;
 }
 
@@ -63,7 +60,7 @@ export function attachEntryMarkers(
     const isFresh = freshEntryId !== null && group.entries.some((e) => e.id === freshEntryId);
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = `pinezka${isFresh ? ' swieza' : ''}`;
+    el.className = `pinezka${wow ? ' wow' : ''}${isFresh ? ' swieza' : ''}`;
     el.setAttribute('aria-label', group.place.name);
     el.innerHTML = pinSVG(newest.verdict, wow);
     el.addEventListener('click', (ev) => {
