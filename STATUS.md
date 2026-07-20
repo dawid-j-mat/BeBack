@@ -200,6 +200,36 @@
     widzi, a ustawienie OSM i tak go obowiązuje. Realny RLS sprawdzi Dawid
     (`rls_check.sql`).
 
+## Zrobione (sesja 8, lipiec 2026)
+
+- **Pierwszy feedback z testów na telefonie** (zgłoszone przez Dawida
+  po dniu testów; punkty 1–4, 7, 9 wdrożone, 5, 6, 8 omówione w rozmowie –
+  czekają na decyzje):
+  - **Przycisk „wróć do mnie"** (D-41): prawy dolny róg mapy, celownik –
+    mapa wraca do pozycji GPS po przeglądaniu innych okolic.
+  - **Przycisk „pokaż wszystko"** (D-41): nad celownikiem, ramka z kropką –
+    jedno dotknięcie oddala mapę tak, że widać wszystkie pinezki (po
+    aktualnym filtrze); znika przy pustej mapie.
+  - **Znak WOW na pinezce** (D-40): toporna gwiazdka-nalepka zastąpiona
+    delikatną złotą poświatą (cienki pierścień + łuna); dziennik
+    i datownik bez zmian; DESIGN.md §3 pkt 3 zaktualizowany.
+  - **„W pobliżu" bez śmieci** (D-42): Google dostał filtr `includedTypes`
+    zawężający wyniki do noclegów, jedzenia i atrakcji (koniec ze sklepami
+    odzieżowymi i nazwami ulic); OSM miał filtr od zawsze.
+  - **Naprawa „W pobliżu" na OSM** (D-42): błąd w zapytaniu Overpass
+    (`out center tags` wycinał współrzędne punktowych POI), oba serwery
+    odpytywane równolegle zamiast po kolei, timeout 6 → 10 s. Uwaga:
+    sandbox tej sesji nie miał dostępu do serwerów Overpass – realne
+    zachowanie „W pobliżu" na OSM musi sprawdzić Dawid na telefonie.
+  - **Edytowalny podpis** (D-43): w arkuszu podpisu (dotknięcie nazwy
+    w nagłówku) nowy przycisk „Zmień podpis"; zapis lokalnie + do
+    `profiles.display_name`, podpis podąża za kontem.
+  - **Zero migracji bazy i zmian w RLS.**
+  - Weryfikacja E2E w Chromium (~390 px, preview build, zaślepki Supabase):
+    poświata WOW bez gwiazdki, oba przyciski działają (fit obejmuje
+    Katowice i Gdańsk, celownik wraca do Katowic), „Zmień podpis" wysyła
+    PATCH i od razu zmienia nagłówek.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -242,10 +272,18 @@ z ustawieniem admina – `?places=auto` przywraca automatykę.
   „Dodaj miejsce, w którym jestem" (GPS) działa bez zasięgu.
 ## Następny krok (nowa sesja)
 
-Plastry 1–8 = pełny zakres MVP z SPEC §7; plaster 9 (przełącznik dostawcy
-miejsc dla admina) domknięty w sesji 7. Przed wyjazdem: tydzień testów
-na spacerach (SPEC §7), w tym tryb samolotowy. W kolejce dalej: glyphy
-Domine/Karla na mapie (backlog wyżej) i backlog produktowy z SPEC §4.
+Plastry 1–8 = pełny zakres MVP z SPEC §7; plaster 9 domknięty w sesji 7;
+sesja 8 = poprawki z pierwszego feedbacku mobilnego (D-40–D-43).
+Z feedbacku czekają na decyzję Dawida (omówione w rozmowie sesji 8):
+- **pkt 6** – filtry kategorii (nocleg/jedzenie/atrakcja) na mapie
+  i ewentualne przeniesienie „Wszystko / Tylko Wrócę" do arkusza podpisu;
+- **pkt 8** – system zaproszeń z ratyfikacją admina (D-16a, SPEC §4) –
+  osobny plaster, wymaga własnego SMTP (limit 2 maile/h wbudowanej poczty);
+- **pkt 5** – ergonomia wielu ocen tego samego miejsca (dziś: jedna pinezka
+  na miejsce, karty przełączane strzałkami, D-27) – ewentualne szlify.
+Przed wyjazdem: tydzień testów na spacerach (SPEC §7), w tym tryb
+samolotowy. W kolejce dalej: glyphy Domine/Karla na mapie (backlog wyżej)
+i backlog produktowy z SPEC §4.
 
 ## Stan odbioru
 
@@ -264,6 +302,16 @@ już jakiś jest (inna nazwa w promieniu 50 m) → pytanie „To samo miejsce
 co …?"; po „Tak, to samo" oba wpisy dzielą jedną pinezkę z przełączanymi
 kartami (licznik „1/2"); (4) sprawdzić, że werdykty/kategorie wyglądają
 jak dotąd (bez regresji).
+Sesja 8 czeka na odbiór (telefon, produkcja po merge'u): (1) przesunąć
+mapę gdzieś daleko → celownik w prawym dolnym rogu wraca do własnej
+pozycji; (2) ramka nad celownikiem oddala mapę tak, że widać wszystkie
+pinezki naraz; (3) pinezka WOW ma złotą poświatę zamiast gwiazdki;
+(4) „W pobliżu" pokazuje tylko noclegi/jedzenie/atrakcje – i na Google,
+i na OSM; na OSM sprawdzić, czy zniknął błąd „Nie udało się pobrać miejsc
+w pobliżu" (sandbox sesji nie miał dostępu do Overpass – patrz sekcja
+sesji 8); (5) dotknąć podpisu → „Zmień podpis" → wpisać imię i nazwisko –
+podpis zmienia się w nagłówku i przy rekomendacjach, także po
+przeładowaniu i na drugim urządzeniu.
 Plaster 9 czeka na odbiór – najpierw kroki ręczne (sekcja wyżej).
 Scenariusz odbioru: (1) w SQL Editorze uruchomić rozszerzony
 `rls_check.sql` – wynik PASS; (2) na koncie admina dotknąć podpisu →

@@ -108,6 +108,20 @@
   /* wide enough for the admin's three-button source row */
   min-width: 200px;
 }
+.podpis-zmien {
+  font-family: var(--font-tekst);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  color: var(--atrament-70);
+  padding: 4px 4px 0;
+  cursor: pointer;
+  text-align: left;
+  min-height: 44px;
+}
 .podpis-jezyki {
   display: flex;
   gap: 8px;
@@ -320,6 +334,38 @@
   border-color: var(--atrament);
 }
 
+/* discreet map controls, bottom-right: fit-all-pins and locate-me (D-41) */
+.mapa-przyciski {
+  position: absolute;
+  right: 12px;
+  bottom: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3;
+}
+.mapa-przycisk {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--bialy);
+  border: 1px solid var(--atrament-45);
+  color: var(--atrament);
+  box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.mapa-przycisk:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(38, 50, 77, 0.15);
+}
+.mapa-przycisk svg {
+  width: 22px;
+  height: 22px;
+}
+
 /* entry pins and clusters (DOM markers, D-26) */
 .pinezka {
   background: none;
@@ -338,6 +384,10 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+}
+/* WOW = a quiet gold halo around the head (D-40); gold stays WOW-only */
+.pinezka.wow .glowka {
+  filter: drop-shadow(0 0 3px rgba(184, 134, 11, 0.85)) drop-shadow(0 0 8px rgba(184, 134, 11, 0.4));
 }
 .pinezka.swieza .glowka {
   transform-box: fill-box;

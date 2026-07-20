@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Lang } from '../i18n';
 
@@ -6,14 +6,19 @@ import type { Lang } from '../i18n';
 // cached per user in localStorage so the header signature and offline-stamped
 // entries keep it even when the profile fetch cannot run (SPEC §3.5); the
 // language has its own device copy inside src/i18n (key `beback:lang`).
-export interface Profile {
+interface ProfileData {
   displayName: string;
   // null until the profile arrives - the device language stays in charge
   profileLang: Lang | null;
 }
 
+export interface Profile extends ProfileData {
+  // Change the signature: instant locally, fire-and-forget to the profile row
+  rename: (name: string) => void;
+}
+
 export function useProfile(userId: string | null): Profile {
-  const [profile, setProfile] = useState<Profile>(() => ({
+  const [profile, setProfile] = useState<ProfileData>(() => ({
     displayName: userId ? (localStorage.getItem(`beback:name:${userId}`) ?? '') : '',
     profileLang: null,
   }));
@@ -45,7 +50,31 @@ export function useProfile(userId: string | null): Profile {
     };
   }, [userId]);
 
-  return profile;
+  // The signature is how friends recognise who recommends what, so everyone
+  // can set a real name instead of the e-mail-derived default. Same pattern
+  // as the language (D-37): device copy first, profile row follows the account.
+  const rename = useCallback(
+    (name: string) => {
+      const trimmed = name.trim().slice(0, 60);
+      if (!userId || !trimmed) return;
+      setProfile((prev) => ({ ...prev, displayName: trimmed }));
+      try {
+        localStorage.setItem(`beback:name:${userId}`, trimmed);
+      } catch {
+        // best-effort cache
+      }
+      void supabase
+        .from('profiles')
+        .update({ display_name: trimmed })
+        .eq('id', userId)
+        .then(({ error }) => {
+          if (error) console.warn('[beback] profile name update failed:', error);
+        });
+    },
+    [userId],
+  );
+
+  return { ...profile, rename };
 }
 
 // Fire-and-forget: the device copy switches instantly, the profile row makes

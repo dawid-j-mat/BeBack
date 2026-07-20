@@ -21,7 +21,7 @@ export default function App() {
   const [editing, setEditing] = useState<Entry | null>(null);
   const [freshEntryId, setFreshEntryId] = useState<string | null>(null);
   const userId = session?.user.id ?? null;
-  const { displayName, profileLang } = useProfile(userId);
+  const { displayName, profileLang, rename } = useProfile(userId);
   const { entries, refresh } = useOfflineEntries(userId);
   const { placesSetting, isAdmin, changePlacesSetting } = useAppSettings(userId);
 
@@ -59,6 +59,7 @@ export default function App() {
         displayName={displayName}
         lang={lang}
         onLangChange={changeLang}
+        onRename={rename}
         isAdmin={isAdmin}
         placesSetting={placesSetting}
         onPlacesSettingChange={changePlacesSetting}

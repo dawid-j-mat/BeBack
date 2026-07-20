@@ -61,6 +61,37 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
     return groupByPlace(visible);
   }, [entries, filter]);
 
+  // "Where am I" (D-41): after browsing elsewhere the map comes back to the
+  // user's position, like the locate button in any maps app.
+  function locate() {
+    getPosition()
+      .then((pos) => {
+        const map = mapRef.current;
+        if (!map) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        map.easeTo({
+          center: [pos.lng, pos.lat],
+          zoom: Math.max(map.getZoom(), 14),
+          duration: reduced ? 0 : 600,
+        });
+      })
+      .catch(() => {});
+  }
+
+  // One tap to take in every pin (D-41) - "where did they eat on that trip".
+  function fitAll() {
+    const map = mapRef.current;
+    if (!map || groups.length === 0) return;
+    const bounds = new maplibregl.LngLatBounds();
+    for (const group of groups) bounds.extend([group.place.lng, group.place.lat]);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    map.fitBounds(bounds, {
+      padding: { top: 104, bottom: 64, left: 48, right: 48 },
+      maxZoom: 15,
+      duration: reduced ? 0 : 800,
+    });
+  }
+
   useEffect(() => {
     markersRef.current?.setGroups(groups, freshEntryId);
   }, [groups, freshEntryId]);
@@ -95,6 +126,51 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
           onClick={() => setFilter('wroce')}
         >
           {t('f_wroce')}
+        </button>
+      </div>
+      <div className="mapa-przyciski">
+        {groups.length > 0 && (
+          <button
+            type="button"
+            className="mapa-przycisk"
+            aria-label={t('wszystkie_aria')}
+            onClick={fitAll}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 4H5.8A1.8 1.8 0 0 0 4 5.8V9" />
+              <path d="M15 4h3.2A1.8 1.8 0 0 1 20 5.8V9" />
+              <path d="M20 15v3.2a1.8 1.8 0 0 1-1.8 1.8H15" />
+              <path d="M9 20H5.8A1.8 1.8 0 0 1 4 18.2V15" />
+              <circle cx="12" cy="12" r="2.2" />
+            </svg>
+          </button>
+        )}
+        <button
+          type="button"
+          className="mapa-przycisk"
+          aria-label={t('centruj_aria')}
+          onClick={locate}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="5.5" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+          </svg>
         </button>
       </div>
       {selected && (

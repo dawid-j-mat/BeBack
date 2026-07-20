@@ -12,8 +12,10 @@ const OVERPASS_URLS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const PHOTON_URL = 'https://photon.komoot.io/api';
-// Public instances can be busy; the place step must never hang.
-const TIMEOUT_MS = 6000;
+// Public instances can be busy; the place step must never hang. 10 s instead
+// of the original 6: under load Overpass queues requests and a fixed 6 s cut
+// both instances off before either could answer (D-42).
+const TIMEOUT_MS = 10_000;
 
 // OSM tag values covering our three categories (SPEC §3.1):
 // jedzenie via amenity, nocleg and atrakcja via tourism plus a few leisure spots.
@@ -62,31 +64,36 @@ export async function osmSearchNearby(position: GeoPosition): Promise<PlaceCandi
   const around = `around:${NEARBY_RADIUS_M},${position.lat},${position.lng}`;
   // Overpass returns elements in no particular order, so the cap has to be
   // generous - sorting by distance and trimming happens client-side.
-  const query = `[out:json][timeout:6];
+  // `out center 60` (body verbosity), NOT `out tags`: the `tags` verbosity
+  // strips coordinates from nodes, silently dropping most POIs (D-42).
+  const query = `[out:json][timeout:8];
 (
   nwr(${around})[name][amenity~"^(${AMENITY})$"];
   nwr(${around})[name][tourism~"^(${TOURISM})$"];
   nwr(${around})[name][leisure~"^(${LEISURE})$"];
 );
-out center tags 60;`;
-  let lastError: unknown = new Error('No Overpass instance configured');
-  for (const url of OVERPASS_URLS) {
-    try {
-      const json = (await fetchJson(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(query)}`,
-      })) as { elements?: OverpassElement[] };
-      return (json.elements ?? [])
-        .map((el) => toNearbyCandidate(el, position))
-        .filter((c): c is PlaceCandidate => c !== null)
-        .sort((a, b) => (a.distanceM ?? 0) - (b.distanceM ?? 0))
-        .slice(0, NEARBY_LIMIT);
-    } catch (err) {
-      lastError = err;
-    }
+out center 60;`;
+  // Both instances race in parallel, first good answer wins - sequential
+  // fallback meant a busy main instance ate the whole time budget before
+  // the mirror was even tried. Two requests per tap is fine at our scale.
+  const attempts = OVERPASS_URLS.map((url) =>
+    fetchJson(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+    }),
+  );
+  let json: { elements?: OverpassElement[] };
+  try {
+    json = (await Promise.any(attempts)) as { elements?: OverpassElement[] };
+  } catch (err) {
+    throw err instanceof AggregateError ? err.errors[0] : err;
   }
-  throw lastError;
+  return (json.elements ?? [])
+    .map((el) => toNearbyCandidate(el, position))
+    .filter((c): c is PlaceCandidate => c !== null)
+    .sort((a, b) => (a.distanceM ?? 0) - (b.distanceM ?? 0))
+    .slice(0, NEARBY_LIMIT);
 }
 
 interface PhotonFeature {
