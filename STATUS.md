@@ -260,6 +260,27 @@
     z „Wrócę!", zapytanie Overpass wychodzi GET-em, 80-znakowa nazwa
     mieści się w kafelku (bez przepełnienia).
 
+## Zrobione (sesja 10, lipiec 2026)
+
+- **„W pobliżu" na OSM – rozstrzygnięcie** (D-46). Diag z D-45 przyniósł
+  twarde dane: z sieci Dawida (komputer i telefon) padają **wszystkie**
+  instancje Overpass (de/fr: „Failed to fetch", coffee/kumi: timeout),
+  a Photon działa. Zamiast walczyć z publicznym Overpassem:
+  - **Photon reverse jako ratunek**: gdy cały wyścig Overpass przegra,
+    lista „W pobliżu" powstaje z `photon.komoot.io/reverse` filtrowanego
+    po stronie klienta tymi samymi tagami trzech kategorii; użytkownik
+    nie widzi już błędu, tylko listę (nieco uboższą niż z Overpass).
+  - **Diag rozbudowany**: dopisuje wynik ratunku („photon-reverse:
+    OK (n)" albo powód jego porażki) oraz – sondą w tle – status głównej
+    instancji (`/api/status`), co odróżnia „Overpass leży" od „moja sieć
+    nie widzi Overpass". Wynik sondy u Dawida rozstrzygnie, czy da się
+    kiedyś wrócić do Overpass jako pierwszego źródła.
+  - Weryfikacja E2E w Chromium: wszystkie 4 instancje ubite na poziomie
+    sieci → lista przychodzi z Photona (restauracja przechodzi, sklep
+    odzieżowy i budynek odpadają na sicie), zero linii błędu, diag
+    z pełnym śladem widoczny w arkuszu admina.
+  - **Zero migracji bazy i zmian w RLS.**
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -309,8 +330,11 @@ Decyzje Dawida z odbioru sesji 8: ergonomia wielu ocen tego samego
 miejsca – czeka „na realną potrzebę"; **zaproszenia z ratyfikacją admina**
 (D-16a, SPEC §4) – następny duży plaster, na osobną sesję (wymaga
 własnego SMTP – limit 2 maile/h wbudowanej poczty).
-Jeśli „W pobliżu" na OSM znów padnie: admin → arkusz podpisu → linia
-diagnostyczna pod „Źródło miejsc" mówi, która instancja i dlaczego.
+„W pobliżu" na OSM ma od sesji 10 ratunek z Photon reverse (D-46);
+linia diagnostyczna admina (arkusz podpisu, pod „Źródło miejsc")
+pokazuje ślad Overpass, wynik ratunku i sondę `/api/status` – przy
+odbiorze odczytać i zaraportować (rozstrzyga, czy Overpass jest u nas
+w ogóle osiągalny).
 Przed wyjazdem: tydzień testów na spacerach (SPEC §7), w tym tryb
 samolotowy. W kolejce dalej: glyphy Domine/Karla na mapie (backlog wyżej)
 i backlog produktowy z SPEC §4.
@@ -335,14 +359,13 @@ jak dotąd (bez regresji).
 Sesja 8 odebrana na telefonie (PR #11 na produkcji): mapa, poświata WOW,
 podpis i filtr Google działają; z odbioru wyszły punkty sesji 9
 (OSM nadal padał, długie nazwy rozjeżdżały kafelki).
-Sesja 9 czeka na odbiór (telefon, produkcja po merge'u; pamiętać
-o „Odśwież" na pasku nowej wersji): (1) przełączyć źródło na OSM →
-„W pobliżu" przynosi miejsca; jeśli nie – dotknąć podpisu i odczytać
-linię diagnostyczną pod „Źródło miejsc"; (2) w trybie Google sprawdzić
-kafelek z długą nazwą – tekst zawija się w środku; (3) na mapie:
-odklikanie sztućców chowa knajpy, „Wrócę!" zawęża resztę do zielonych
-werdyktów, ponowne kliknięcia wracają do pełnego widoku; filtr działa
-też z przyciskiem „pokaż wszystko" (kadruje tylko przefiltrowane).
+Sesja 9 odebrana: filtry i zawijanie nazw działają; „W pobliżu" na OSM
+nadal padało, ale diag z D-45 dostarczył dane do diagnozy – stąd sesja 10.
+Sesja 10 czeka na odbiór (po merge'u i „Odśwież"): (1) źródło OSM →
+„W pobliżu" pokazuje listę (z Photona, gdy Overpass niedostępny) zamiast
+błędu; (2) dotknąć podpisu i **przepisać linię diagnostyczną** do
+feedbacku – zwłaszcza końcówkę „status: …" (rozstrzyga, czy Overpass
+jest osiągalny z naszej sieci).
 Plaster 9 czeka na odbiór – najpierw kroki ręczne (sekcja wyżej).
 Scenariusz odbioru: (1) w SQL Editorze uruchomić rozszerzony
 `rls_check.sql` – wynik PASS; (2) na koncie admina dotknąć podpisu →

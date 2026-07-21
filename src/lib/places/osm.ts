@@ -17,6 +17,7 @@ const OVERPASS_URLS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const PHOTON_URL = 'https://photon.komoot.io/api';
+const PHOTON_REVERSE_URL = 'https://photon.komoot.io/reverse';
 // Public instances can be busy; the place step must never hang. 10 s instead
 // of the original 6: under load Overpass queues requests and a fixed 6 s cut
 // both instances off before either could answer (D-42).
@@ -28,6 +29,14 @@ const AMENITY = 'restaurant|cafe|bar|pub|fast_food|ice_cream|food_court|biergart
 const TOURISM =
   'hotel|guest_house|hostel|apartment|chalet|camp_site|motel|attraction|museum|gallery|viewpoint|zoo|theme_park';
 const LEISURE = 'park|garden|water_park|nature_reserve';
+
+// The same category tags as sets, for filtering Photon results client-side
+// (Photon reports each hit's osm_key/osm_value).
+const CATEGORY_TAGS: Record<string, Set<string>> = {
+  amenity: new Set(AMENITY.split('|')),
+  tourism: new Set(TOURISM.split('|')),
+  leisure: new Set(LEISURE.split('|')),
+};
 
 async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
@@ -114,13 +123,24 @@ out center 60;`;
       // best-effort diagnostics
     }
   } catch (err) {
+    // Every Overpass instance failed. Photon has proven reachable where
+    // Overpass is not (D-46), so nearby falls back to its reverse endpoint;
+    // the admin diag still records why Overpass failed either way, and a
+    // background probe of the main instance's /api/status tells blocked
+    // apart from down.
     const summary = failures.join(' · ');
     console.error('[beback] Overpass nearby failed on all instances:', summary);
+    let viaPhoton: PlaceCandidate[] | null = null;
+    let photonNote: string;
     try {
-      localStorage.setItem(NEARBY_DIAG_KEY, `${new Date().toISOString().slice(0, 16)} ${summary}`);
-    } catch {
-      // best-effort diagnostics
+      viaPhoton = await photonReverseNearby(position);
+      photonNote = `photon-reverse: OK (${viaPhoton.length})`;
+    } catch (photonErr) {
+      photonNote = `photon-reverse: ${photonErr instanceof Error ? photonErr.message : String(photonErr)}`;
     }
+    storeDiag(`${new Date().toISOString().slice(0, 16)} ${summary} · ${photonNote}`);
+    probeOverpassStatus();
+    if (viaPhoton) return viaPhoton;
     throw err instanceof AggregateError ? (err.errors[0] ?? err) : err;
   }
   return (json.elements ?? [])
@@ -130,11 +150,62 @@ out center 60;`;
     .slice(0, NEARBY_LIMIT);
 }
 
+function storeDiag(text: string): void {
+  try {
+    localStorage.setItem(NEARBY_DIAG_KEY, text);
+  } catch {
+    // best-effort diagnostics
+  }
+}
+
+// Fire-and-forget: /api/status is a plain CORS-enabled endpoint on the main
+// instance; whether it answers distinguishes "Overpass down or limiting"
+// from "this network cannot reach Overpass at all". Appended to the diag
+// once it resolves.
+function probeOverpassStatus(): void {
+  void fetch('https://overpass-api.de/api/status', { signal: AbortSignal.timeout(TIMEOUT_MS) })
+    .then((res) => `status: HTTP ${res.status}`)
+    .catch((err: unknown) => `status: ${err instanceof Error ? err.message : String(err)}`)
+    .then((note) => {
+      const current = nearbyDiag();
+      if (current) storeDiag(`${current} · ${note}`);
+    });
+}
+
+// Nearby without Overpass: Photon's reverse endpoint lists what surrounds
+// the position; our three-category filter runs client-side on the reported
+// osm_key/osm_value (Photon has no value-level tag filter of its own).
+async function photonReverseNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
+  const params = new URLSearchParams({
+    lat: String(position.lat),
+    lon: String(position.lng),
+    // km; older Photon versions simply ignore the radius parameter
+    radius: String(NEARBY_RADIUS_M / 1000),
+    limit: '50',
+  });
+  const json = (await fetchJson(`${PHOTON_REVERSE_URL}?${params}`)) as {
+    features?: PhotonFeature[];
+  };
+  return (json.features ?? [])
+    .filter((f) => {
+      const key = f.properties?.osm_key;
+      const value = f.properties?.osm_value;
+      return key !== undefined && value !== undefined && CATEGORY_TAGS[key]?.has(value) === true;
+    })
+    .map((f) => toSearchCandidate(f, position))
+    .filter((c): c is PlaceCandidate => c !== null)
+    .filter((c) => (c.distanceM ?? Infinity) <= NEARBY_RADIUS_M)
+    .sort((a, b) => (a.distanceM ?? 0) - (b.distanceM ?? 0))
+    .slice(0, NEARBY_LIMIT);
+}
+
 interface PhotonFeature {
   geometry?: { coordinates?: number[] };
   properties?: {
     osm_type?: 'N' | 'W' | 'R';
     osm_id?: number;
+    osm_key?: string;
+    osm_value?: string;
     name?: string;
     street?: string;
     housenumber?: string;
