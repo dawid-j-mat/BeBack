@@ -169,6 +169,15 @@
   font-size: 12px;
   padding: 9px 4px;
 }
+/* admin-only trail of the last failed OSM nearby fetch (D-45) */
+.zrodlo-diag {
+  font-family: var(--font-tekst);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--atrament-45);
+  overflow-wrap: anywhere;
+  max-width: 230px;
+}
 .podpis-wyloguj {
   font-family: var(--font-tekst);
   font-weight: 700;
@@ -328,10 +337,32 @@
   box-shadow: 0 2px 0 rgba(38, 50, 77, 0.15);
   min-height: 44px;
 }
-.filtr.on {
-  background: var(--atrament);
+/* category toggles (D-44): on = paper as usual, off = pressed-out kraft */
+.filtr.kat {
+  width: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.filtr.kat svg {
+  width: 21px;
+  height: 21px;
+}
+.filtr.kat:not(.on) {
+  background: var(--kraft);
+  color: var(--atrament-45);
+  box-shadow: inset 0 1px 2px rgba(38, 50, 77, 0.14);
+}
+/* the "Wrócę!" overlay - verdict green, so the colour keeps its meaning */
+.filtr.wroce {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--zielen);
+}
+.filtr.wroce.on {
+  background: var(--zielen);
+  border-color: var(--zielen);
   color: var(--papier-jasny);
-  border-color: var(--atrament);
 }
 
 /* discreet map controls, bottom-right: fit-all-pins and locate-me (D-41) */

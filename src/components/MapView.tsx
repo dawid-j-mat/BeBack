@@ -5,13 +5,14 @@ import { paperStyle } from '../map/paperStyle';
 import { attachEntryMarkers, type EntryMarkersController } from '../map/entryMarkers';
 import { getPosition } from '../lib/geolocation';
 import { groupByPlace, type Entry, type PlaceGroup } from '../lib/entries';
+import { CATEGORY_ICONS, type Category } from '../add/StepCategory';
 import { EntryCard } from './EntryCard';
 import { t } from '../i18n';
 
 // Fallback view when geolocation is unavailable or denied.
 const KATOWICE: [number, number] = [19.0238, 50.2599];
 
-type MapFilter = 'all' | 'wroce';
+const ALL_CATEGORIES: Category[] = ['nocleg', 'jedzenie', 'atrakcja'];
 
 interface MapViewProps {
   entries: Entry[];
@@ -25,7 +26,11 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<EntryMarkersController | null>(null);
   const onPickRef = useRef<(group: PlaceGroup) => void>(() => {});
-  const [filter, setFilter] = useState<MapFilter>('all');
+  // Category filters (D-44): all three on by default and additive - tapping
+  // one off subtracts its pins. The small "Wrócę!" toggle overlays whatever
+  // categories are selected ("restaurants I'd return to").
+  const [cats, setCats] = useState<Category[]>(ALL_CATEGORIES);
+  const [wroceOnly, setWroceOnly] = useState(false);
   const [selected, setSelected] = useState<PlaceGroup | null>(null);
 
   onPickRef.current = setSelected;
@@ -57,9 +62,15 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
   }, []);
 
   const groups = useMemo(() => {
-    const visible = filter === 'wroce' ? entries.filter((e) => e.verdict === 'wroce') : entries;
+    const visible = entries.filter(
+      (e) => cats.includes(e.category) && (!wroceOnly || e.verdict === 'wroce'),
+    );
     return groupByPlace(visible);
-  }, [entries, filter]);
+  }, [entries, cats, wroceOnly]);
+
+  function toggleCat(cat: Category) {
+    setCats((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
+  }
 
   // "Where am I" (D-41): after browsing elsewhere the map comes back to the
   // user's position, like the locate button in any maps app.
@@ -113,19 +124,25 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
     <>
       <div ref={container} className="mapa" aria-label={t('mapa_aria')} />
       <div className="filtry">
+        {ALL_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`filtr kat${cats.includes(cat) ? ' on' : ''}`}
+            aria-label={t(`kat_${cat}`)}
+            aria-pressed={cats.includes(cat)}
+            onClick={() => toggleCat(cat)}
+          >
+            {CATEGORY_ICONS[cat]}
+          </button>
+        ))}
         <button
           type="button"
-          className={`filtr${filter === 'all' ? ' on' : ''}`}
-          onClick={() => setFilter('all')}
+          className={`filtr wroce${wroceOnly ? ' on' : ''}`}
+          aria-pressed={wroceOnly}
+          onClick={() => setWroceOnly((v) => !v)}
         >
-          {t('f_wszystko')}
-        </button>
-        <button
-          type="button"
-          className={`filtr${filter === 'wroce' ? ' on' : ''}`}
-          onClick={() => setFilter('wroce')}
-        >
-          {t('f_wroce')}
+          {t('o_wroce')}
         </button>
       </div>
       <div className="mapa-przyciski">
