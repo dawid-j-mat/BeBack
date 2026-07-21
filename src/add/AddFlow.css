@@ -143,14 +143,23 @@
   transform: translateY(1px);
   box-shadow: 0 1px 0 rgba(38, 50, 77, 0.12);
 }
+/* long names must wrap inside the tile, not spill out of it - the text
+   column has to be allowed to shrink (min-width: 0) before it can wrap */
+.miejsce > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
 .miejsce b {
   font-size: 15.5px;
   font-weight: 700;
   display: block;
+  overflow-wrap: anywhere;
 }
 .miejsce small {
   font-size: 12.5px;
   color: var(--atrament-70);
+  display: block;
+  overflow-wrap: anywhere;
 }
 .miejsce .dyst {
   font-family: var(--font-reka);
