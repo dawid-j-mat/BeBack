@@ -70,7 +70,10 @@ Data i lokalizacja zapisują się automatycznie, bez pytania.
 - MapLibre GL + kafelki OpenStreetMap, **własny styl** zgodny z `DESIGN.md`.
 - Pinezki w kolorach werdyktów; WOW = dodatkowa złota pieczęć-nalepka przy pinezce.
 - **Klastrowanie** przy oddaleniu (biblioteka supercluster lub wbudowane klastrowanie MapLibre).
-- **Filtry**: Wszystko / Tylko „Wrócę" (w przyszłości: kategorie).
+- **Filtry**: trzy przełączniki kategorii (domyślnie włączone, sumujące się –
+  odklikanie odejmuje pinezki kategorii) + nakładkowy przełącznik „Wrócę!"
+  zawężający zaznaczone kategorie do werdyktu `wroce`; stan domyślny
+  (wszystko włączone, „Wrócę!" wyłączone) = dawny filtr „Wszystko".
 - Dotknięcie pinezki → karta wpisu (arkusz od dołu).
 
 ### 3.4 Dziennik
@@ -112,7 +115,7 @@ Treść wpisów nie jest tłumaczona – to słowa autora.
 - Ustawienia widoczności / blokowanie dostępu do własnych materiałów.
 - Publikacja z opóźnieniem / ukrywanie precyzyjnych dat (prywatność lokalizacyjna).
 - Drugi stopień zaufania („znajomi znajomych") – wyraźnie oznaczony, jeśli kiedykolwiek.
-- Filtry map po kategoriach; widoki per miasto/wyjazd.
+- Widoki per miasto/wyjazd (filtry po kategoriach weszły do §3.3 decyzją D-44).
 
 ## 5. Stos technologiczny
 

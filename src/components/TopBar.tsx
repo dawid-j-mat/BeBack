@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { PlacesSetting } from '../lib/appSettings';
+import { nearbyDiag } from '../lib/places/osm';
 import { t, type Lang } from '../i18n';
 
 interface TopBarProps {
@@ -112,6 +113,9 @@ export function TopBar({
                     </button>
                   ))}
                 </div>
+                {/* admin-only debug trail (D-45): why the last OSM nearby
+                    failed, per instance - phones have no console */}
+                {nearbyDiag() && <span className="zrodlo-diag">{nearbyDiag()}</span>}
               </div>
             )}
             <button type="button" className="podpis-wyloguj" onClick={signOut}>

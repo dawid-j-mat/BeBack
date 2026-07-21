@@ -3,35 +3,31 @@ import { t } from '../i18n';
 
 export type Category = 'nocleg' | 'jedzenie' | 'atrakcja';
 
+// One icon per category, shared by the tiles below and the map's category
+// filters (D-44) so the pictogram means the same thing everywhere.
+export const CATEGORY_ICONS: Record<Category, ReactElement> = {
+  nocleg: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M3 18V8m0 6h18v4M3 14h18a0 0 0 0 0 0 0v0a4 4 0 0 0-4-4H8" />
+      <circle cx="6.5" cy="10.5" r="1.6" />
+    </svg>
+  ),
+  jedzenie: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M7 3v7m-2.5-7v7M9.5 3v7M7 10v11M16 3c-1.7 1.5-2.5 3.5-2.5 6 0 2 .8 3 2.5 3v9" />
+    </svg>
+  ),
+  atrakcja: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M4 20 10 7l4 8 3-5 3 10Z" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
 const TILES: { category: Category; label: 'kat_nocleg' | 'kat_jedzenie' | 'kat_atrakcja'; icon: ReactElement }[] = [
-  {
-    category: 'nocleg',
-    label: 'kat_nocleg',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-        <path d="M3 18V8m0 6h18v4M3 14h18a0 0 0 0 0 0 0v0a4 4 0 0 0-4-4H8" />
-        <circle cx="6.5" cy="10.5" r="1.6" />
-      </svg>
-    ),
-  },
-  {
-    category: 'jedzenie',
-    label: 'kat_jedzenie',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-        <path d="M7 3v7m-2.5-7v7M9.5 3v7M7 10v11M16 3c-1.7 1.5-2.5 3.5-2.5 6 0 2 .8 3 2.5 3v9" />
-      </svg>
-    ),
-  },
-  {
-    category: 'atrakcja',
-    label: 'kat_atrakcja',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-        <path d="M4 20 10 7l4 8 3-5 3 10Z" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
+  { category: 'nocleg', label: 'kat_nocleg', icon: CATEGORY_ICONS.nocleg },
+  { category: 'jedzenie', label: 'kat_jedzenie', icon: CATEGORY_ICONS.jedzenie },
+  { category: 'atrakcja', label: 'kat_atrakcja', icon: CATEGORY_ICONS.atrakcja },
 ];
 
 // The three category tiles, shared by the add flow (tap = move on, nothing
