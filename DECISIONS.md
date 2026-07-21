@@ -384,3 +384,22 @@ zapisują się na urządzeniu i pokazują w arkuszu podpisu **tylko adminowi**
 trzy sesje debugowania. Odrzucone: własny serwer pośredniczący (nie mamy
 backendu poza Supabase) i pokazywanie kodów błędów wszystkim (didaskalia
 techniczne w UI zwykłego użytkownika).
+
+**D-46 · „W pobliżu" ma zapasowe źródło: Photon reverse.** Linia
+diagnostyczna z D-45 pokazała stan faktyczny: z sieci Dawida (komputer
+i telefon) pada każda instancja Overpass – de i fr natychmiastowym
+„Failed to fetch", coffee i kumi timeoutem – podczas gdy Photon działa
+bez zarzutu. Z publicznymi serwerami Overpass nie wygramy, więc gdy
+wszystkie przegrają wyścig, „W pobliżu" pyta endpoint `photon.komoot.io/
+reverse` (co jest wokół tych współrzędnych) i filtruje odpowiedź po
+`osm_key`/`osm_value` tymi samymi listami tagów trzech kategorii –
+Photon nie ma filtra wartości tagów po swojej stronie, więc sito jest
+klienckie. Overpass zostaje pierwszym wyborem (bogatsze wyniki: Photon
+reverse zwraca ograniczoną liczbę najbliższych obiektów wszelkiego
+rodzaju, z których sito przepuszcza część); diag admina odnotowuje
+i porażkę Overpass, i wynik ratunku („photon-reverse: OK (n)"), a sonda
+`overpass-api.de/api/status` w tle dopisuje, czy główna instancja jest
+w ogóle osiągalna – to odróżni „Overpass leży" od „moja sieć nie widzi
+Overpass". Odrzucone: rezygnacja z Overpass w ogóle (tam, gdzie działa,
+daje pełniejszy obraz okolicy) i własne proxy (brak backendu poza
+Supabase – zasada projektu).
