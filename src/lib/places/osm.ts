@@ -5,10 +5,15 @@ import { distanceMeters, NEARBY_LIMIT, NEARBY_RADIUS_M, type PlaceCandidate } fr
 // "Nearby" asks the Overpass API for named POIs around the GPS position;
 // text search goes to Photon, komoot's typo-tolerant geocoder.
 
-// The main public instance gets overloaded at times, so nearby falls
-// through to the kumi.systems mirror before giving up.
+// Public Overpass instances come and go (kumi.systems retired its public
+// mirror) and the main one rate-limits per IP - which on mobile networks
+// is shared by thousands of people (CGNAT), so a phone can be locked out
+// while a desktop works. All instances race in parallel (D-45); a dead
+// entry in this list costs nothing, the first good answer wins.
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const PHOTON_URL = 'https://photon.komoot.io/api';
@@ -60,6 +65,19 @@ function toNearbyCandidate(el: OverpassElement, from: GeoPosition): PlaceCandida
   };
 }
 
+// When every instance fails, the per-host reasons land here so the admin
+// sheet can show them - the phone has no console and "does not work" alone
+// has already cost three debugging sessions (D-45). Cleared on success.
+const NEARBY_DIAG_KEY = 'beback:nearby-diag';
+
+export function nearbyDiag(): string | null {
+  try {
+    return localStorage.getItem(NEARBY_DIAG_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export async function osmSearchNearby(position: GeoPosition): Promise<PlaceCandidate[]> {
   const around = `around:${NEARBY_RADIUS_M},${position.lat},${position.lng}`;
   // Overpass returns elements in no particular order, so the cap has to be
@@ -73,21 +91,37 @@ export async function osmSearchNearby(position: GeoPosition): Promise<PlaceCandi
   nwr(${around})[name][leisure~"^(${LEISURE})$"];
 );
 out center 60;`;
-  // Both instances race in parallel, first good answer wins - sequential
+  // GET, not POST (D-45): it mirrors the request profile of Photon, which
+  // demonstrably works from the same phones, and some mobile-network
+  // middleboxes are unkind to cross-origin POST bodies.
+  // All instances race in parallel, first good answer wins - sequential
   // fallback meant a busy main instance ate the whole time budget before
-  // the mirror was even tried. Two requests per tap is fine at our scale.
+  // any mirror was even tried. A few extra requests per tap is fine at
+  // our scale.
+  const failures: string[] = [];
   const attempts = OVERPASS_URLS.map((url) =>
-    fetchJson(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
+    fetchJson(`${url}?data=${encodeURIComponent(query)}`).catch((err: unknown) => {
+      failures.push(`${new URL(url).hostname}: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
     }),
   );
   let json: { elements?: OverpassElement[] };
   try {
     json = (await Promise.any(attempts)) as { elements?: OverpassElement[] };
+    try {
+      localStorage.removeItem(NEARBY_DIAG_KEY);
+    } catch {
+      // best-effort diagnostics
+    }
   } catch (err) {
-    throw err instanceof AggregateError ? err.errors[0] : err;
+    const summary = failures.join(' · ');
+    console.error('[beback] Overpass nearby failed on all instances:', summary);
+    try {
+      localStorage.setItem(NEARBY_DIAG_KEY, `${new Date().toISOString().slice(0, 16)} ${summary}`);
+    } catch {
+      // best-effort diagnostics
+    }
+    throw err instanceof AggregateError ? (err.errors[0] ?? err) : err;
   }
   return (json.elements ?? [])
     .map((el) => toNearbyCandidate(el, position))
