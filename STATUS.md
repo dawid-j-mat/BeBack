@@ -230,6 +230,36 @@
     Katowice i Gdańsk, celownik wraca do Katowic), „Zmień podpis" wysyła
     PATCH i od razu zmienia nagłówek.
 
+## Zrobione (sesja 9, lipiec 2026)
+
+- **Drugi feedback z telefonu** (punkty 1–3 wdrożone; 4–5 świadomie
+  odłożone: ergonomia wielu ocen „na realną potrzebę", zaproszenia na
+  osobną sesję):
+  - **„W pobliżu" na OSM – kolejne podejście** (D-45): Photon działał,
+    Overpass padał na obu instancjach → diagnoza: wycofane publiczne
+    lustro kumi.systems + limity per IP na overpass-api.de (CGNAT sieci
+    komórkowych) + POST podatny na pośredników sieci. Zmiany: zapytanie
+    GET-em (profil identyczny z działającym Photonem), cztery instancje
+    w wyścigu (de / openstreetmap.fr / private.coffee / kumi), a gdy
+    padną wszystkie – powody per instancja zapisują się na urządzeniu
+    i **admin widzi je w arkuszu podpisu** (sekcja „Źródło miejsc").
+    Sandbox nadal bez dostępu do Overpass – test wyłącznie na telefonie;
+    jeśli znów padnie, linia diagnostyczna w arkuszu powie dlaczego.
+  - **Kafelki „W pobliżu" nie rozjeżdżają się** przy długich nazwach
+    (kolumna tekstu dostała `min-width: 0` + `overflow-wrap: anywhere` –
+    nazwa zawija się w środku kafelka).
+  - **Filtry kategorii na mapie** (D-44, zastępują „Wszystko / Tylko
+    Wrócę"): trzy ikonowe przełączniki (łóżko / sztućce / góry – ikony
+    współdzielone z krokiem kategorii przez `CATEGORY_ICONS`), domyślnie
+    włączone, odklikanie odejmuje pinezki; obok mały przełącznik
+    „Wrócę!" (zieleń werdyktu) nakładany na zaznaczone kategorie;
+    wyłączona kategoria = wciśnięty kraft. SPEC §3.3/§4 zaktualizowane.
+  - **Zero migracji bazy i zmian w RLS.**
+  - Weryfikacja E2E w Chromium (~390 px, preview build, zaślepki):
+    przełączniki odejmują/dodają pinezki we wszystkich kombinacjach
+    z „Wrócę!", zapytanie Overpass wychodzi GET-em, 80-znakowa nazwa
+    mieści się w kafelku (bez przepełnienia).
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -273,14 +303,14 @@ z ustawieniem admina – `?places=auto` przywraca automatykę.
 ## Następny krok (nowa sesja)
 
 Plastry 1–8 = pełny zakres MVP z SPEC §7; plaster 9 domknięty w sesji 7;
-sesja 8 = poprawki z pierwszego feedbacku mobilnego (D-40–D-43).
-Z feedbacku czekają na decyzję Dawida (omówione w rozmowie sesji 8):
-- **pkt 6** – filtry kategorii (nocleg/jedzenie/atrakcja) na mapie
-  i ewentualne przeniesienie „Wszystko / Tylko Wrócę" do arkusza podpisu;
-- **pkt 8** – system zaproszeń z ratyfikacją admina (D-16a, SPEC §4) –
-  osobny plaster, wymaga własnego SMTP (limit 2 maile/h wbudowanej poczty);
-- **pkt 5** – ergonomia wielu ocen tego samego miejsca (dziś: jedna pinezka
-  na miejsce, karty przełączane strzałkami, D-27) – ewentualne szlify.
+sesje 8–9 = poprawki z feedbacku mobilnego (D-40–D-45; filtry kategorii
+z D-44 weszły zamiast „Wszystko / Tylko Wrócę").
+Decyzje Dawida z odbioru sesji 8: ergonomia wielu ocen tego samego
+miejsca – czeka „na realną potrzebę"; **zaproszenia z ratyfikacją admina**
+(D-16a, SPEC §4) – następny duży plaster, na osobną sesję (wymaga
+własnego SMTP – limit 2 maile/h wbudowanej poczty).
+Jeśli „W pobliżu" na OSM znów padnie: admin → arkusz podpisu → linia
+diagnostyczna pod „Źródło miejsc" mówi, która instancja i dlaczego.
 Przed wyjazdem: tydzień testów na spacerach (SPEC §7), w tym tryb
 samolotowy. W kolejce dalej: glyphy Domine/Karla na mapie (backlog wyżej)
 i backlog produktowy z SPEC §4.
@@ -302,16 +332,17 @@ już jakiś jest (inna nazwa w promieniu 50 m) → pytanie „To samo miejsce
 co …?"; po „Tak, to samo" oba wpisy dzielą jedną pinezkę z przełączanymi
 kartami (licznik „1/2"); (4) sprawdzić, że werdykty/kategorie wyglądają
 jak dotąd (bez regresji).
-Sesja 8 czeka na odbiór (telefon, produkcja po merge'u): (1) przesunąć
-mapę gdzieś daleko → celownik w prawym dolnym rogu wraca do własnej
-pozycji; (2) ramka nad celownikiem oddala mapę tak, że widać wszystkie
-pinezki naraz; (3) pinezka WOW ma złotą poświatę zamiast gwiazdki;
-(4) „W pobliżu" pokazuje tylko noclegi/jedzenie/atrakcje – i na Google,
-i na OSM; na OSM sprawdzić, czy zniknął błąd „Nie udało się pobrać miejsc
-w pobliżu" (sandbox sesji nie miał dostępu do Overpass – patrz sekcja
-sesji 8); (5) dotknąć podpisu → „Zmień podpis" → wpisać imię i nazwisko –
-podpis zmienia się w nagłówku i przy rekomendacjach, także po
-przeładowaniu i na drugim urządzeniu.
+Sesja 8 odebrana na telefonie (PR #11 na produkcji): mapa, poświata WOW,
+podpis i filtr Google działają; z odbioru wyszły punkty sesji 9
+(OSM nadal padał, długie nazwy rozjeżdżały kafelki).
+Sesja 9 czeka na odbiór (telefon, produkcja po merge'u; pamiętać
+o „Odśwież" na pasku nowej wersji): (1) przełączyć źródło na OSM →
+„W pobliżu" przynosi miejsca; jeśli nie – dotknąć podpisu i odczytać
+linię diagnostyczną pod „Źródło miejsc"; (2) w trybie Google sprawdzić
+kafelek z długą nazwą – tekst zawija się w środku; (3) na mapie:
+odklikanie sztućców chowa knajpy, „Wrócę!" zawęża resztę do zielonych
+werdyktów, ponowne kliknięcia wracają do pełnego widoku; filtr działa
+też z przyciskiem „pokaż wszystko" (kadruje tylko przefiltrowane).
 Plaster 9 czeka na odbiór – najpierw kroki ręczne (sekcja wyżej).
 Scenariusz odbioru: (1) w SQL Editorze uruchomić rozszerzony
 `rls_check.sql` – wynik PASS; (2) na koncie admina dotknąć podpisu →

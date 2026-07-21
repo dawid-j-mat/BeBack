@@ -353,3 +353,34 @@ ten sam wzorzec co pytanie przy wylogowaniu (D-21); zapis jak przy języku
 podpis podąża za kontem. Odrzucone: osobny ekran profilu (MVP nadal nie
 ma ekranu ustawień) i wymuszanie formatu „Imię Nazwisko" (to umowa
 społeczna grona, nie walidacja).
+
+**D-44 · Filtry mapy: kategorie odejmowane + nakładka „Wrócę!".** Zamiast
+pary „Wszystko / Tylko Wrócę" (D-10) mapa dostaje trzy przełączniki
+kategorii z ikonami z kroku kategorii (łóżko / sztućce / góry – ta sama
+ikona znaczy to samo w całej apce) oraz mały przełącznik „Wrócę!".
+Kategorie są domyślnie włączone i sumują się – odklikanie odejmuje
+pinezki tej kategorii; „Wrócę!" nakłada się na zaznaczone kategorie
+(„knajpy, do których wrócę"), a jego odklikanie wraca do pełnego widoku –
+stan „Wszystko" istnieje więc bez osobnego przycisku. Wyłączona
+kategoria wygląda jak wciśnięta w kraft (kolor elementów nieaktywnych
+z DESIGN), aktywne „Wrócę!" przyjmuje zieleń werdyktu (kolor tylko
+znaczeniowy). Odrzucone: złota gwiazdka jako ikona atrakcji (złoto jest
+wyłącznie dla WOW; poza tym trzymamy się ikon kafli) i przenoszenie
+filtrów do arkusza podpisu (filtr to codzienne narzędzie mapy).
+
+**D-45 · Overpass przez GET, świeża lista instancji, ślad diagnostyczny
+dla admina.** „W pobliżu" na OSM padało na telefonie mimo D-42, choć
+Photon (wyszukiwarka) działał z tej samej sieci. Trzy zmiany:
+(1) zapytanie idzie **GET-em** z parametrem `data` – dokładnie ten profil
+żądania, który u Photona przechodzi (POST bywa gorzej traktowany przez
+pośredników sieci komórkowych); (2) lista instancji odświeżona –
+kumi.systems wycofało publiczne lustro, a główna overpass-api.de
+limituje na adres IP, który w sieci komórkowej (CGNAT) dzielą tysiące
+osób; teraz ścigają się cztery: de, openstreetmap.fr, private.coffee
+i (na wszelki wypadek) kumi – martwa pozycja nic nie kosztuje, wygrywa
+pierwsza dobra odpowiedź; (3) gdy padną wszystkie, powody per instancja
+zapisują się na urządzeniu i pokazują w arkuszu podpisu **tylko adminowi**
+– telefon nie ma konsoli, a „nie działa" bez szczegółów kosztowało już
+trzy sesje debugowania. Odrzucone: własny serwer pośredniczący (nie mamy
+backendu poza Supabase) i pokazywanie kodów błędów wszystkim (didaskalia
+techniczne w UI zwykłego użytkownika).
