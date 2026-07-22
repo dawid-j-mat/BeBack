@@ -491,3 +491,17 @@ centruje się samo, jak na Androidzie. Cofnięcie zgody w ustawieniach iOS
 dotknięcie". Odrzucone: `navigator.permissions.query('geolocation')` jako
 sygnał zgody (na Safari historycznie niepewne) na rzecz zapamiętania
 własnego, faktycznie udanego odczytu.
+
+**D-52 · Własny SMTP (Brevo) jako warunek logowania kodem.** Odbiór D-48
+ujawnił twardą przeszkodę: wbudowana poczta Supabase **blokuje edycję
+szablonów** e-maili (baner „Set up custom SMTP to edit templates") i wysyła
+domyślny mail z linkiem, nie kodem – więc bez własnego SMTP kodu logowania
+nie da się w ogóle pokazać użytkownikowi. Podpinamy więc darmowego nadawcę
+(Brevo – nie wymaga własnej domeny, wysyłka z potwierdzonego pojedynczego
+adresu; 300 maili/dzień), co odblokowuje szablon (`{{ .Token }}`), a przy
+okazji znosi limit 2 maile/h wbudowanej poczty (dotąd w backlogu STATUS)
+i jest tym samym SMTP, którego będą wymagać zaproszenia (SPEC §4, kolejna
+sesja). Konfiguracja mieszka w panelach (Brevo + Supabase), nie w repo –
+kroki w `supabase/SETUP.md` §4. Odrzucone: Resend (wymaga własnej domeny do
+wysyłki na dowolne adresy – bariera dla braku domeny) i pozostanie przy
+wbudowanej poczcie (szablon zablokowany, logowanie kodem niemożliwe).

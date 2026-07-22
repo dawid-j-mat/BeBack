@@ -292,7 +292,11 @@
     numeryczną i autofill iOS. **Krok ręczny Dawida**: szablon maila Magic
     Link w Supabase ma pokazywać `{{ .Token }}` i nie mieć
     `{{ .ConfirmationURL }}` (SETUP §4) – bez tego mail dalej przyjdzie
-    z linkiem, a kodu nie będzie.
+    z linkiem, a kodu nie będzie. **Uwaga (odbiór): wbudowana poczta
+    Supabase blokuje edycję szablonu – konieczny własny SMTP** (D-52,
+    wybór Dawida: Brevo bez domeny; i tak potrzebny do zaproszeń).
+    Do czasu podpięcia SMTP na komputerze/Androidzie logowanie działa
+    przez link (apka wychwytuje sesję z URL), pada tylko iPhone.
   - **Uczciwa geolokalizacja** (D-49): GPS w apce na iOS nie działał, błąd
     był połykany, mapa cicho startowała w Katowicach. `getPosition`
     (`src/lib/geolocation.ts`) rozróżnia teraz odmowę zgody od błędu
@@ -350,8 +354,10 @@ z ustawieniem admina – `?places=auto` przywraca automatykę.
 
 ## Znane sprawy / backlog techniczny
 
-- Wbudowana poczta Supabase: limit 2 maile logowania/h – docelowo własny SMTP
-  (np. Resend, darmowy próg).
+- Wbudowana poczta Supabase: limit 2 maile logowania/h i **zablokowana edycja
+  szablonów** – rozwiązanie wybrane w sesji 11 (D-52): własny SMTP przez Brevo
+  (bez domeny, 300 maili/dzień); kroki w `supabase/SETUP.md` §4. Podpina Dawid
+  ręcznie – bez tego logowanie kodem nie zadziała (mail idzie z linkiem).
 - Etykiety mapy w Noto Sans (glyphy OpenFreeMap); Domine/Karla wymagałyby
   własnego hostingu glyphów – rozważyć w plastrze 8.
 - Code-splitting MapLibre odrzucony (D-35): mapa jest pierwszym ekranem,

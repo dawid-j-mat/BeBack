@@ -26,20 +26,57 @@ do repozytorium – tylko do `.env.local` na Twoim komputerze i do panelu Vercel
 2. **Authentication → Users → Add user → Create new user**: podaj swój e-mail
    (zaznacz „Auto Confirm User"). Powtórz dla e-maila partnerki.
 
-## 4. Logowanie kodem – szablon e-maila (od sesji 11, D-48)
+## 4. Logowanie kodem – własny SMTP + szablon e-maila (od sesji 11, D-48/D-52)
 
 Apka loguje **sześciocyfrowym kodem**, nie klikanym linkiem: na iPhonie
 zainstalowana apka (z ekranu początkowego) ma osobny magazyn niż Safari, więc
 link z maila logował w Safari, a apka sesji nie widziała. Kod przepisuje się
 w dowolnym kontekście, więc działa wszędzie tak samo.
 
-**Authentication → Emails → Magic Link** (szablon): tak przygotować treść, żeby
-pokazywała **kod** i nie kusiła linkiem:
-- wstaw `{{ .Token }}` (to sześciocyfrowy kod),
-- **usuń** `{{ .ConfirmationURL }}` (link – inaczej na iPhonie ktoś kliknie
-  z przyzwyczajenia i znów wpadnie w pętlę logowania poza apką).
+### 4a. Podepnij własny SMTP (warunek konieczny)
 
-Przykład treści: „Twój kod logowania do BeBack: **{{ .Token }}** (ważny 1 h)".
+Wbudowana poczta Supabase **blokuje edycję szablonów** (Authentication → Emails
+pokazuje baner „Set up custom SMTP to edit templates") i wysyła domyślny mail
+z **linkiem**, nie kodem. Żeby w mailu pojawił się kod, trzeba podpiąć własnego
+nadawcę (SMTP). Przy okazji znika limit 2 maile/h wbudowanej poczty. Ten sam
+SMTP posłuży do zaproszeń (backlog).
+
+Nadawca bez własnej domeny – **Brevo** (darmowe 300 maili/dzień):
+1. Załóż konto na brevo.com.
+2. **Senders & IP → Senders** → dodaj adres nadawcy (może być Twój Gmail) →
+   potwierdź klikając link z maila weryfikacyjnego Brevo.
+3. **SMTP & API → SMTP** → „Generate a new SMTP key". Zanotuj: serwer
+   `smtp-relay.brevo.com`, port `587`, login (Twój adres konta Brevo) i klucz
+   SMTP (hasło).
+
+W Supabase: **Authentication → Emails → Set up SMTP** (przycisk z banera):
+- **Enable Custom SMTP**: włącz,
+- **Sender email**: potwierdzony adres nadawcy z Brevo,
+- **Sender name**: `BeBack`,
+- **Host**: `smtp-relay.brevo.com`, **Port**: `587`,
+- **Username**: login Brevo, **Password**: klucz SMTP,
+- Zapisz.
+
+(Uwaga na dostarczalność: mail „od" adresu Gmail wysłany cudzym SMTP-em może
+czasem wpaść do spamu – w zaufanym gronie wystarczy raz oznaczyć „to nie spam".
+Własna domena rozwiązuje to docelowo.)
+
+### 4b. Szablon e-maila z kodem
+
+Dopiero teraz pola są edytowalne. **Authentication → Emails → Magic Link**:
+- **Subject**: `Twój kod logowania do BeBack`,
+- **Body** (przełącz na „Source" i wklej):
+
+```html
+<h2>Logowanie do BeBack</h2>
+<p>Twój kod logowania:</p>
+<p style="font-size:28px; font-weight:bold; letter-spacing:4px;">{{ .Token }}</p>
+<p>Wpisz go w aplikacji. Kod jest ważny przez godzinę.</p>
+```
+
+`{{ .Token }}` to sześciocyfrowy kod; brak `{{ .ConfirmationURL }}` (linku) jest
+celowy – żeby na iPhonie nikt nie kliknął linku z przyzwyczajenia i nie wpadł
+w pętlę logowania poza apką.
 
 **Authentication → URL Configuration** – **Site URL** nadal ustaw
 (`http://localhost:5173`, a docelowo adres z Vercela); Redirect URLs nie są przy
