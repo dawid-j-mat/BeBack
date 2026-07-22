@@ -49,6 +49,30 @@ export function isIosStandalone(): boolean {
   return ios && standalone;
 }
 
+// Once a real fix has succeeded on this device, the OS-level permission is
+// granted, and a later call - even without a gesture - no longer risks the
+// silent iOS denial. So we remember it and from then on the map auto-centres
+// on every launch, iOS included (D-51); the flag is cleared if permission is
+// later revoked (a denied result).
+const GEO_GRANTED_KEY = 'beback:geo-granted';
+
+export function geoGranted(): boolean {
+  try {
+    return localStorage.getItem(GEO_GRANTED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setGeoGranted(granted: boolean): void {
+  try {
+    if (granted) localStorage.setItem(GEO_GRANTED_KEY, '1');
+    else localStorage.removeItem(GEO_GRANTED_KEY);
+  } catch {
+    // best-effort
+  }
+}
+
 // The last successful fix, kept on the device: when a fresh fix fails (weak
 // GPS, slow permission prompt), nearby suggestions can still start from the
 // last known spot. Capped at an hour - an older position could suggest
@@ -106,6 +130,7 @@ export async function getPosition(timeoutMs = 8000): Promise<GeoPosition> {
       maximumAge: 60_000,
     });
     storeGeoDiag(null);
+    setGeoGranted(true);
     return pos;
   } catch (err) {
     try {
@@ -115,6 +140,7 @@ export async function getPosition(timeoutMs = 8000): Promise<GeoPosition> {
         maximumAge: 600_000,
       });
       storeGeoDiag(null);
+      setGeoGranted(true);
       return pos;
     } catch {
       const last = readLastPosition();
@@ -127,6 +153,9 @@ export async function getPosition(timeoutMs = 8000): Promise<GeoPosition> {
       const code = posErr?.code;
       const message = posErr?.message ?? (err instanceof Error ? err.message : String(err));
       const kind: GeoErrorKind = code === 1 ? 'denied' : 'unavailable';
+      // A denial means permission is gone - stop auto-locating until the user
+      // grants it again by tapping; a timeout outdoors keeps the grant.
+      if (kind === 'denied') setGeoGranted(false);
       const standalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
       storeGeoDiag(
         `${new Date().toISOString().slice(0, 16)} code=${code ?? '?'} ${kind} standalone=${standalone}: ${message}`,

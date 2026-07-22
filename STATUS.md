@@ -305,6 +305,11 @@
     zapytanie iOS ciszą odrzucał i zapamiętywał „nie"); pierwszym
     zapytaniem jest gest – dotknięcie celownika. Android i desktop bez
     zmian. Diag geo dostał flagę `standalone=…`.
+  - **Po jednorazowej zgodzie – auto-centrowanie na iOS** (D-51, na
+    pytanie Dawida „czy trzeba klikać za każdym razem?"): pierwszy udany
+    odczyt zapisuje flagę `beback:geo-granted`; od tej pory iPhone
+    centruje mapę przy każdym starcie sam, jak Android. Celownik dotyka
+    się raz w życiu (dla promptu iOS). Cofnięcie zgody czyści flagę.
   - **OSM „W pobliżu" – zamknięte** (D-47): sonda z sesji 10 dała werdykt
     (`status: Failed to fetch`, Photon reverse `OK (0)`) – OSM nie zastąpi
     Google. Google zostaje domyślnym źródłem; maszyneria OSM zostaje jako
@@ -314,9 +319,10 @@
     dwufazowe logowanie (błędny kod → komunikat, „Inny e-mail" → powrót,
     poprawny kod → `verifyOtp` typu `email` → wejście do apki); odmowa
     lokalizacji → komunikat „Brak zgody…" + diag z kodem 1; zgoda →
-    centrowanie bez komunikatu, diag wyczyszczony; iOS standalone → 0
-    zapytań GPS przy starcie, 1 po dotknięciu celownika (desktop: auto na
-    starcie bez zmian).
+    centrowanie bez komunikatu, diag wyczyszczony; iOS standalone bez flagi
+    → 0 zapytań GPS przy starcie, 1 po dotknięciu celownika (flaga
+    `geo-granted` zapisana); iOS standalone z flagą → auto-centrowanie
+    przy starcie; desktop: auto na starcie bez zmian.
 
 ## Środowiska
 

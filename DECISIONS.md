@@ -474,3 +474,20 @@ działają jak dotąd (auto-centrowanie na starcie). Diag geo dostał flagę
 globalne wyłączenie auto-centrowania (niepotrzebna regresja na Androidzie
 i desktopie, gdzie działa) oraz sztuczne „rozgrzewanie" uprawnień
 niewidocznym przyciskiem (obejście łamiące zasadę oczywistego interfejsu).
+
+**D-51 · Po jednorazowej zgodzie iOS centruje mapę automatycznie przy
+każdym starcie.** D-50 (pytanie o GPS dopiero po dotknięciu) rozwiązało
+ciszę iOS, ale samo w sobie zmuszałoby do dotykania celownika przy każdym
+otwarciu apki – niewygodne, sprzeczne z oczekiwaniem „apka sama pokazuje,
+gdzie jestem". Kluczowa obserwacja: cicha odmowa iOS dotyczy tylko
+zapytania bez gestu, **zanim** zgoda istnieje; gdy raz jest udzielona,
+kolejne odczyty (także bez gestu, przy starcie) działają bez pytania.
+Więc pierwszy udany odczyt zapisuje na urządzeniu flagę
+`beback:geo-granted`, a mapa auto-centruje przy starcie, gdy nie jesteśmy
+w iOS-standalone **albo** flaga jest ustawiona. Efekt na iPhonie: celownik
+dotyka się raz w życiu (żeby iOS pokazał prompt), potem każde uruchomienie
+centruje się samo, jak na Androidzie. Cofnięcie zgody w ustawieniach iOS
+(późniejsza odmowa) czyści flagę – apka wraca do trybu „czekaj na
+dotknięcie". Odrzucone: `navigator.permissions.query('geolocation')` jako
+sygnał zgody (na Safari historycznie niepewne) na rzecz zapamiętania
+własnego, faktycznie udanego odczytu.

@@ -3,7 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { paperStyle } from '../map/paperStyle';
 import { attachEntryMarkers, type EntryMarkersController } from '../map/entryMarkers';
-import { getPosition, GeoError, isIosStandalone } from '../lib/geolocation';
+import { getPosition, GeoError, isIosStandalone, geoGranted } from '../lib/geolocation';
 import { groupByPlace, type Entry, type PlaceGroup } from '../lib/entries';
 import { CATEGORY_ICONS, type Category } from '../add/StepCategory';
 import { EntryCard } from './EntryCard';
@@ -48,11 +48,12 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
     mapRef.current = map;
     markersRef.current = attachEntryMarkers(map, (group) => onPickRef.current(group));
     let cancelled = false;
-    // On an installed iOS PWA the very first geolocation call must come from a
-    // user gesture, or iOS denies it silently and remembers the "no" (D-50).
-    // There we hold off and let the locate button ask; everywhere else the map
-    // centres on the user right away as before.
-    if (!isIosStandalone()) {
+    // Auto-centre on load - except the very first time on an installed iOS
+    // PWA, where a geolocation call without a user gesture is denied silently
+    // and iOS remembers the "no" (D-50). There we wait for the locate tap the
+    // first time; once permission has been granted (geoGranted), every later
+    // launch centres automatically like everywhere else (D-51).
+    if (!isIosStandalone() || geoGranted()) {
       getPosition()
         .then((pos) => {
           if (!cancelled) map.jumpTo({ center: [pos.lng, pos.lat], zoom: 14 });
