@@ -289,6 +289,33 @@
   color: var(--atrament-70);
   text-align: center;
 }
+/* six-digit code entry (D-48): centred, spaced digits */
+.logowanie-kod {
+  text-align: center;
+  letter-spacing: 0.4em;
+  font-size: 22px !important;
+  font-weight: 700;
+}
+.logowanie-akcje {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logowanie-link {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-tekst);
+  font-size: 13px;
+  color: var(--atrament-70);
+  text-decoration: underline;
+  padding: 8px 4px;
+  min-height: 44px;
+}
+.logowanie-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 
 /* ---------- map ---------- */
 .mapa-wrap {
@@ -395,6 +422,32 @@
 .mapa-przycisk svg {
   width: 22px;
   height: 22px;
+}
+
+/* geolocation error, above the bottom nav (D-49): honest state + retry */
+.geo-blad {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 16px;
+  z-index: 4;
+  background: var(--papier-jasny);
+  border: 1px solid var(--atrament-45);
+  border-radius: var(--promien);
+  box-shadow: 0 3px 0 rgba(38, 50, 77, 0.15);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-tekst);
+  font-size: 13px;
+  color: var(--atrament);
+  line-height: 1.4;
+}
+.geo-blad-akcje {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 /* entry pins and clusters (DOM markers, D-26) */
