@@ -3,7 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { paperStyle } from '../map/paperStyle';
 import { attachEntryMarkers, type EntryMarkersController } from '../map/entryMarkers';
-import { getPosition } from '../lib/geolocation';
+import { getPosition, GeoError } from '../lib/geolocation';
 import { groupByPlace, type Entry, type PlaceGroup } from '../lib/entries';
 import { CATEGORY_ICONS, type Category } from '../add/StepCategory';
 import { EntryCard } from './EntryCard';
@@ -32,6 +32,7 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
   const [cats, setCats] = useState<Category[]>(ALL_CATEGORIES);
   const [wroceOnly, setWroceOnly] = useState(false);
   const [selected, setSelected] = useState<PlaceGroup | null>(null);
+  const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
   onPickRef.current = setSelected;
 
@@ -73,8 +74,11 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
   }
 
   // "Where am I" (D-41): after browsing elsewhere the map comes back to the
-  // user's position, like the locate button in any maps app.
+  // user's position, like the locate button in any maps app. A tap is a user
+  // gesture, so on iOS it is also the most reliable moment for the permission
+  // prompt - and if it fails, the reason is shown, not swallowed (D-49).
   function locate() {
+    setGeoMsg(null);
     getPosition()
       .then((pos) => {
         const map = mapRef.current;
@@ -86,7 +90,14 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
           duration: reduced ? 0 : 600,
         });
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err instanceof GeoError && err.kind === 'denied') {
+          const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          setGeoMsg(ios ? `${t('geo_denied')} ${t('geo_denied_ios')}` : t('geo_denied'));
+        } else {
+          setGeoMsg(t('geo_unavailable'));
+        }
+      });
   }
 
   // One tap to take in every pin (D-41) - "where did they eat on that trip".
@@ -190,6 +201,19 @@ export function MapView({ entries, freshEntryId, currentUserId, onEdit }: MapVie
           </svg>
         </button>
       </div>
+      {geoMsg && (
+        <div className="geo-blad" role="alert">
+          <span>{geoMsg}</span>
+          <div className="geo-blad-akcje">
+            <button type="button" className="btn-maly" onClick={locate}>
+              {t('sprobuj_ponownie')}
+            </button>
+            <button type="button" className="btn-maly" onClick={() => setGeoMsg(null)}>
+              {t('zamknij')}
+            </button>
+          </div>
+        </div>
+      )}
       {selected && (
         <EntryCard
           group={selected}
