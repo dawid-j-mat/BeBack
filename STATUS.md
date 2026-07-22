@@ -281,6 +281,35 @@
     z pełnym śladem widoczny w arkuszu admina.
   - **Zero migracji bazy i zmian w RLS.**
 
+## Zrobione (sesja 11, lipiec 2026)
+
+- **Feedback z iPhone'a – pierwsze uruchomienie zainstalowanej PWA**:
+  - **Logowanie kodem** (D-48): magic link na iOS logował w Safari, a apka
+    z ekranu początkowego (osobny magazyn) sesji nie widziała – pętla.
+    Teraz logowanie sześciocyfrowym kodem (`signInWithOtp` bez linku →
+    `verifyOtp` typu `email`, `src/auth/LoginScreen.tsx`): dwie fazy
+    (e-mail → kod), „Wyślij ponownie" i „Inny e-mail", pole z klawiaturą
+    numeryczną i autofill iOS. **Krok ręczny Dawida**: szablon maila Magic
+    Link w Supabase ma pokazywać `{{ .Token }}` i nie mieć
+    `{{ .ConfirmationURL }}` (SETUP §4) – bez tego mail dalej przyjdzie
+    z linkiem, a kodu nie będzie.
+  - **Uczciwa geolokalizacja** (D-49): GPS w apce na iOS nie działał, błąd
+    był połykany, mapa cicho startowała w Katowicach. `getPosition`
+    (`src/lib/geolocation.ts`) rozróżnia teraz odmowę zgody od błędu
+    odczytu (`GeoError`), zapisuje ślad (`beback:geo-diag`); dotknięcie
+    celownika przy niepowodzeniu pokazuje komunikat z instrukcją i akcją
+    „Spróbuj ponownie" (`MapView`); admin widzi kod błędu w arkuszu podpisu.
+  - **OSM „W pobliżu" – zamknięte** (D-47): sonda z sesji 10 dała werdykt
+    (`status: Failed to fetch`, Photon reverse `OK (0)`) – OSM nie zastąpi
+    Google. Google zostaje domyślnym źródłem; maszyneria OSM zostaje jako
+    bezpiecznik. Dalej tematu nie drążymy bez własnego backendu.
+  - **Zero migracji bazy i zmian w RLS.**
+  - Weryfikacja E2E w Chromium (~390 px, preview build, zaślepki Supabase):
+    dwufazowe logowanie (błędny kod → komunikat, „Inny e-mail" → powrót,
+    poprawny kod → `verifyOtp` typu `email` → wejście do apki); odmowa
+    lokalizacji → komunikat „Brak zgody…" + diag z kodem 1; zgoda →
+    centrowanie bez komunikatu, diag wyczyszczony.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -330,11 +359,10 @@ Decyzje Dawida z odbioru sesji 8: ergonomia wielu ocen tego samego
 miejsca – czeka „na realną potrzebę"; **zaproszenia z ratyfikacją admina**
 (D-16a, SPEC §4) – następny duży plaster, na osobną sesję (wymaga
 własnego SMTP – limit 2 maile/h wbudowanej poczty).
-„W pobliżu" na OSM ma od sesji 10 ratunek z Photon reverse (D-46);
-linia diagnostyczna admina (arkusz podpisu, pod „Źródło miejsc")
-pokazuje ślad Overpass, wynik ratunku i sondę `/api/status` – przy
-odbiorze odczytać i zaraportować (rozstrzyga, czy Overpass jest u nas
-w ogóle osiągalny).
+„W pobliżu" na OSM zamknięte w sesji 11 (D-47): Google jest domyślnym
+źródłem, OSM to bezpiecznik/narzędzie testowe. Arkusz admina (pod
+„Źródło miejsc") pokazuje teraz dwa ślady: ostatnią porażkę OSM (D-45/46)
+i ostatni błąd GPS (D-49, prefiks „GPS ·").
 Przed wyjazdem: tydzień testów na spacerach (SPEC §7), w tym tryb
 samolotowy. W kolejce dalej: glyphy Domine/Karla na mapie (backlog wyżej)
 i backlog produktowy z SPEC §4.
@@ -361,11 +389,18 @@ podpis i filtr Google działają; z odbioru wyszły punkty sesji 9
 (OSM nadal padał, długie nazwy rozjeżdżały kafelki).
 Sesja 9 odebrana: filtry i zawijanie nazw działają; „W pobliżu" na OSM
 nadal padało, ale diag z D-45 dostarczył dane do diagnozy – stąd sesja 10.
-Sesja 10 czeka na odbiór (po merge'u i „Odśwież"): (1) źródło OSM →
-„W pobliżu" pokazuje listę (z Photona, gdy Overpass niedostępny) zamiast
-błędu; (2) dotknąć podpisu i **przepisać linię diagnostyczną** do
-feedbacku – zwłaszcza końcówkę „status: …" (rozstrzyga, czy Overpass
-jest osiągalny z naszej sieci).
+Sesja 10 odebrana: diag potwierdził, że Overpass jest z sieci Dawida
+nieosiągalny, a Photon reverse ubogi – stąd zamknięcie tematu w sesji 11.
+Sesja 11 czeka na odbiór. **Najpierw krok ręczny**: w Supabase zmienić
+szablon maila Magic Link na `{{ .Token }}` bez `{{ .ConfirmationURL }}`
+(SETUP §4) – inaczej mail przyjdzie z linkiem zamiast kodu. Potem po
+deployu i „Odśwież": (1) na iPhonie z **zainstalowanej** apki zalogować
+się kodem z maila – pętla logowania znika; (2) na mapie dotknąć celownika
+– jeśli iOS poprosi o zgodę i ją dasz, mapa centruje na Tobie; jeśli GPS
+dalej nie działa, dotknąć podpisu i **przepisać linię „GPS · …"** z arkusza
+(kod błędu iOS rozstrzygnie, czy to odmowa zgody, czy głębszy problem
+standalone PWA); (3) sprawdzić, że na Androidzie logowanie kodem i GPS
+działają jak dotąd.
 Plaster 9 czeka na odbiór – najpierw kroki ręczne (sekcja wyżej).
 Scenariusz odbioru: (1) w SQL Editorze uruchomić rozszerzony
 `rls_check.sql` – wynik PASS; (2) na koncie admina dotknąć podpisu →
