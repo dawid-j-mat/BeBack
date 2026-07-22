@@ -2,11 +2,17 @@ import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { t } from '../i18n';
 
-type Status = 'idle' | 'sending' | 'sent' | 'error';
+type Phase = 'email' | 'code';
+type Status = 'idle' | 'sending' | 'verifying' | 'error';
 
-// Supabase reports magic-link failures (expired / already used link) by
-// redirecting back with error params in the URL hash. Read them once so the
-// login screen can say what happened instead of failing silently.
+// Login is a two-step e-mail OTP (D-48): the user asks for a code, then types
+// the six digits back in. Unlike a magic link, a typed code works no matter
+// which app or browser opens the mail - which is the whole point on iOS, where
+// an installed PWA has its own storage jar and never sees a session created in
+// Safari. So there is no clicked link here at all.
+
+// A stale magic-link mail (from before D-48) still bounces back with error
+// params in the URL hash; read them once so we can say what happened.
 function readLinkError(): string | null {
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   if (!params.get('error')) return null;
@@ -17,29 +23,54 @@ function readLinkError(): string | null {
 }
 
 export function LoginScreen() {
+  const [phase, setPhase] = useState<Phase>('email');
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [detail, setDetail] = useState<string | null>(() => readLinkError());
 
-  async function sendLink(event: FormEvent) {
-    event.preventDefault();
+  async function sendCode(event?: FormEvent) {
+    event?.preventDefault();
     setStatus('sending');
     setDetail(null);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: {
-        emailRedirectTo: window.location.origin,
-        // closed registration (D-16): links go only to existing accounts
-        shouldCreateUser: false,
-      },
+      // closed registration (D-16): codes go only to existing accounts
+      options: { shouldCreateUser: false },
     });
     if (error) {
       console.error('[beback] signInWithOtp error:', error.message);
       setDetail(error.message);
       setStatus('error');
     } else {
-      setStatus('sent');
+      setCode('');
+      setPhase('code');
+      setStatus('idle');
     }
+  }
+
+  async function verifyCode(event: FormEvent) {
+    event.preventDefault();
+    setStatus('verifying');
+    setDetail(null);
+    // On success the auth listener in useSession picks up the session and the
+    // app swaps the login screen out - nothing more to do here.
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'email',
+    });
+    if (error) {
+      console.error('[beback] verifyOtp error:', error.message);
+      setStatus('error');
+    }
+  }
+
+  function changeEmail() {
+    setPhase('email');
+    setCode('');
+    setStatus('idle');
+    setDetail(null);
   }
 
   return (
@@ -63,10 +94,8 @@ export function LoginScreen() {
           <span className="nazwa">BeBack</span>
         </span>
 
-        {status === 'sent' ? (
-          <p className="logowanie-wyslano">{t('login_wyslano')}</p>
-        ) : (
-          <form className="logowanie-form" onSubmit={sendLink}>
+        {phase === 'email' ? (
+          <form className="logowanie-form" onSubmit={sendCode}>
             <input
               type="email"
               required
@@ -80,6 +109,42 @@ export function LoginScreen() {
             </button>
             {status === 'error' && <p className="logowanie-blad">{t('login_blad')}</p>}
             {detail && <p className="logowanie-szczegol">{detail}</p>}
+          </form>
+        ) : (
+          <form className="logowanie-form" onSubmit={verifyCode}>
+            <p className="logowanie-wyslano">{t('login_wyslano')}</p>
+            <input
+              className="logowanie-kod"
+              type="text"
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder={t('login_kod_ph')}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            />
+            <button
+              type="submit"
+              className="btn pieczec"
+              disabled={status === 'verifying' || code.length < 6}
+            >
+              {status === 'verifying' ? t('login_weryfikacja') : t('login_zaloguj')}
+            </button>
+            {status === 'error' && <p className="logowanie-blad">{t('login_kod_blad')}</p>}
+            <div className="logowanie-akcje">
+              <button
+                type="button"
+                className="logowanie-link"
+                onClick={() => void sendCode()}
+                disabled={status === 'sending'}
+              >
+                {status === 'sending' ? t('login_wysylanie') : t('login_ponow')}
+              </button>
+              <button type="button" className="logowanie-link" onClick={changeEmail}>
+                {t('login_inny_email')}
+              </button>
+            </div>
           </form>
         )}
       </div>

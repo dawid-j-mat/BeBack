@@ -403,3 +403,91 @@ w ogóle osiągalna – to odróżni „Overpass leży" od „moja sieć nie wid
 Overpass". Odrzucone: rezygnacja z Overpass w ogóle (tam, gdzie działa,
 daje pełniejszy obraz okolicy) i własne proxy (brak backendu poza
 Supabase – zasada projektu).
+
+**D-47 · OSM „W pobliżu" domknięte jako niewystarczające – Google
+zostaje.** Sonda z D-46 przyniosła werdykt: z sieci Dawida
+`status: Failed to fetch` (główna instancja Overpass w ogóle
+nieosiągalna, nie „przeciążona"), a Photon reverse zwrócił `OK (0)` –
+w większym mieście kilka miejsc się pojawia, ale za mało i za
+przypadkowo, by zastąpić Google Places jako źródło „W pobliżu".
+Wniosek: darmowe OSM nie zastąpi Google dla tej funkcji; Google
+pozostaje domyślnym i rekomendowanym źródłem (jest darmowe przy dwóch
+kontach – D-08/D-25), a cała maszyneria OSM (przełącznik admina D-39,
+fallback Photon reverse D-46) zostaje jako nieszkodliwy bezpiecznik
+i narzędzie testowe, nie jako realna alternatywa. Temat „W pobliżu na
+OSM" uznajemy za zamknięty – dalsza walka z dostępnością publicznych
+serwerów nie ma sensu bez własnego backendu (poza zakresem MVP).
+
+**D-48 · Logowanie kodem zamiast magic linka (odporne na izolację iOS).**
+Test na iPhonie: zainstalowana z ekranu początkowego apka (standalone
+PWA) ma osobny magazyn cookies/storage niż Safari. Magic link z maila
+otwierał się w Safari, sesja powstawała w Safari, a apka jej nie
+widziała – logowanie zapętlało się poza apką (na Androidzie działało).
+Wymuszenie powrotu linku do zainstalowanej PWA na iOS jest zawodne –
+PWA nie rejestruje uniwersalnych linków jak apka natywna. Rozwiązanie:
+logowanie **sześciocyfrowym kodem** (`signInWithOtp` bez linku →
+`verifyOtp({ type: 'email' })`); kod przepisuje się w dowolnym
+kontekście, więc sesja powstaje w tym samym magazynie, w którym jest
+apka. Jeden spójny sposób na iOS, Androidzie i komputerze; przy okazji
+znikają błędy „link wygasł / już użyty". Pole kodu ma `inputmode=numeric`
+i `autocomplete=one-time-code` (klawiatura numeryczna, autofill iOS).
+Wymaga ręcznego kroku: szablon maila Magic Link w Supabase pokazuje
+`{{ .Token }}`, a `{{ .ConfirmationURL }}` usuwamy (SETUP §4). Odrzucone:
+utrzymanie linku obok kodu (na iOS nawyk klikania linku dalej wpuszczałby
+w pętlę – decyzja Dawida: tylko kod) i próby przechwycenia linku do apki
+(zawodne na iOS). Limit 2 maile/h (wbudowana poczta Supabase) bez zmian –
+własny SMTP zostaje w backlogu.
+
+**D-49 · Geolokalizacja: jawny stan błędu z instrukcją zamiast cichego
+powrotu do Katowic.** W zainstalowanej apce na iPhonie GPS nie działał,
+a błąd był połykany (`.catch(() => {})`), więc mapa cicho startowała
+w Katowicach (pozycja zapasowa) bez śladu, co się stało. Teraz
+`getPosition` rozróżnia odmowę zgody (kod 1 → `GeoError` `denied`) od
+błędu odczytu/timeoutu (`unavailable`) i zapisuje ślad na urządzeniu
+(`beback:geo-diag` – kod i treść błędu, wzorzec `nearbyDiag`). Dotknięcie
+celownika (gest użytkownika – na iOS najpewniejszy moment na prompt
+uprawnień) przy niepowodzeniu pokazuje czytelny komunikat: przy odmowie
+„Włącz lokalizację dla BeBack w ustawieniach telefonu" (na iOS dopisek
+ze ścieżką Ustawienia → Prywatność → Usługi lokalizacji), przy błędzie
+odczytu „spróbuj na otwartym terenie"; komunikat ma akcję „Spróbuj
+ponownie" (stan błędu z akcją, jak D-36 – nie didaskalia). Automatyczne
+centrowanie na starcie dalej połyka błąd po cichu (brak zgody przy
+pierwszym renderze nie ma krzyczeć); ślad diagnostyczny widzi admin
+w arkuszu podpisu, żeby rozstrzygnąć odmowę zgody od głębszego problemu
+iOS ze standalone PWA. Odrzucone: prompt uprawnień na starcie bez gestu
+(na iOS bywa cicho ignorowany) i globalny baner instrukcji (didaskalia –
+komunikat tylko wtedy, gdy użytkownik faktycznie prosi o lokalizację).
+
+**D-50 · Na zainstalowanej apce iOS pierwsze pytanie o GPS dopiero po
+dotknięciu celownika.** Zgłoszenie Dawida uściśliło D-49: na iPhonie
+(zainstalowana apka) lokalizacja była odrzucana **po cichu, bez żadnego
+pytania o zgodę** – na Androidzie działa bez zarzutu. Znana słabość
+WebKita: w standalone PWA zapytanie o pozycję zrobione przy starcie (bez
+gestu użytkownika) bywa cicho odrzucane, a iOS zapamiętuje to „nie",
+więc i późniejsze dotknięcie nie pomaga. Dlatego na iOS w trybie
+standalone (`navigator.standalone === true` + iPhone/iPad w UA) mapa
+**nie odpytuje GPS przy starcie** – pierwszym zapytaniem jest dopiero
+dotknięcie celownika, czyli gest, przy którym iOS najpewniej pokaże
+prompt. Android w standalone i wszystkie przeglądarki na komputerze
+działają jak dotąd (auto-centrowanie na starcie). Diag geo dostał flagę
+`standalone=…`, żeby przy odbiorze potwierdzić kontekst. Odrzucone:
+globalne wyłączenie auto-centrowania (niepotrzebna regresja na Androidzie
+i desktopie, gdzie działa) oraz sztuczne „rozgrzewanie" uprawnień
+niewidocznym przyciskiem (obejście łamiące zasadę oczywistego interfejsu).
+
+**D-51 · Po jednorazowej zgodzie iOS centruje mapę automatycznie przy
+każdym starcie.** D-50 (pytanie o GPS dopiero po dotknięciu) rozwiązało
+ciszę iOS, ale samo w sobie zmuszałoby do dotykania celownika przy każdym
+otwarciu apki – niewygodne, sprzeczne z oczekiwaniem „apka sama pokazuje,
+gdzie jestem". Kluczowa obserwacja: cicha odmowa iOS dotyczy tylko
+zapytania bez gestu, **zanim** zgoda istnieje; gdy raz jest udzielona,
+kolejne odczyty (także bez gestu, przy starcie) działają bez pytania.
+Więc pierwszy udany odczyt zapisuje na urządzeniu flagę
+`beback:geo-granted`, a mapa auto-centruje przy starcie, gdy nie jesteśmy
+w iOS-standalone **albo** flaga jest ustawiona. Efekt na iPhonie: celownik
+dotyka się raz w życiu (żeby iOS pokazał prompt), potem każde uruchomienie
+centruje się samo, jak na Androidzie. Cofnięcie zgody w ustawieniach iOS
+(późniejsza odmowa) czyści flagę – apka wraca do trybu „czekaj na
+dotknięcie". Odrzucone: `navigator.permissions.query('geolocation')` jako
+sygnał zgody (na Safari historycznie niepewne) na rzecz zapamiętania
+własnego, faktycznie udanego odczytu.

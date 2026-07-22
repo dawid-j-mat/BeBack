@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { PlacesSetting } from '../lib/appSettings';
 import { nearbyDiag } from '../lib/places/osm';
+import { geoDiag } from '../lib/geolocation';
 import { t, type Lang } from '../i18n';
 
 interface TopBarProps {
@@ -113,9 +114,11 @@ export function TopBar({
                     </button>
                   ))}
                 </div>
-                {/* admin-only debug trail (D-45): why the last OSM nearby
-                    failed, per instance - phones have no console */}
+                {/* admin-only debug trails - phones have no console:
+                    the last OSM nearby failure per instance (D-45) and the
+                    last geolocation failure code (D-49). */}
                 {nearbyDiag() && <span className="zrodlo-diag">{nearbyDiag()}</span>}
+                {geoDiag() && <span className="zrodlo-diag">GPS · {geoDiag()}</span>}
               </div>
             )}
             <button type="button" className="podpis-wyloguj" onClick={signOut}>

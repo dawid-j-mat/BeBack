@@ -26,12 +26,24 @@ do repozytorium – tylko do `.env.local` na Twoim komputerze i do panelu Vercel
 2. **Authentication → Users → Add user → Create new user**: podaj swój e-mail
    (zaznacz „Auto Confirm User"). Powtórz dla e-maila partnerki.
 
-## 4. Adresy powrotu magic linka
+## 4. Logowanie kodem – szablon e-maila (od sesji 11, D-48)
 
-**Authentication → URL Configuration**:
-- **Site URL**: `http://localhost:5173`
-- **Redirect URLs** – dodaj adres z Vercela, gdy powstanie
-  (np. `https://beback-xxx.vercel.app`).
+Apka loguje **sześciocyfrowym kodem**, nie klikanym linkiem: na iPhonie
+zainstalowana apka (z ekranu początkowego) ma osobny magazyn niż Safari, więc
+link z maila logował w Safari, a apka sesji nie widziała. Kod przepisuje się
+w dowolnym kontekście, więc działa wszędzie tak samo.
+
+**Authentication → Emails → Magic Link** (szablon): tak przygotować treść, żeby
+pokazywała **kod** i nie kusiła linkiem:
+- wstaw `{{ .Token }}` (to sześciocyfrowy kod),
+- **usuń** `{{ .ConfirmationURL }}` (link – inaczej na iPhonie ktoś kliknie
+  z przyzwyczajenia i znów wpadnie w pętlę logowania poza apką).
+
+Przykład treści: „Twój kod logowania do BeBack: **{{ .Token }}** (ważny 1 h)".
+
+**Authentication → URL Configuration** – **Site URL** nadal ustaw
+(`http://localhost:5173`, a docelowo adres z Vercela); Redirect URLs nie są przy
+logowaniu kodem potrzebne, ale nie przeszkadzają.
 
 ## 5. Sprawdź RLS (obowiązkowe)
 
@@ -69,7 +81,7 @@ wyłącznie tutaj, nigdy z aplikacji.
 ## 7. Test końcowy plastra
 
 1. `git pull`, `npm run dev`, otwórz `http://localhost:5173`.
-2. Ekran logowania → wpisz swój e-mail → **Wyślij link** → klik w link z poczty →
-   mapa z Twoim podpisem w prawym górnym rogu.
+2. Ekran logowania → wpisz swój e-mail → **Wyślij kod** → przepisz z poczty
+   sześciocyfrowy kod → **Zaloguj** → mapa z Twoim podpisem w prawym górnym rogu.
 3. W oknie prywatnym przeglądarki zaloguj się na drugie konto.
 4. E-mail spoza dwóch kont → aplikacja pokazuje błąd wysyłki (rejestracja zamknięta).
