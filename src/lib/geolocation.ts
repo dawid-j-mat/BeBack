@@ -38,6 +38,17 @@ function storeGeoDiag(text: string | null): void {
   }
 }
 
+// An installed iOS PWA (added to the home screen) is the one place where a
+// geolocation call made on load - without a user gesture - tends to be denied
+// silently, and iOS then remembers that "no". Detecting it lets the map hold
+// the first fix until the user taps the locate control (D-50). Android
+// standalone and every desktop browser are unaffected.
+export function isIosStandalone(): boolean {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const standalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+  return ios && standalone;
+}
+
 // The last successful fix, kept on the device: when a fresh fix fails (weak
 // GPS, slow permission prompt), nearby suggestions can still start from the
 // last known spot. Capped at an hour - an older position could suggest
@@ -116,7 +127,10 @@ export async function getPosition(timeoutMs = 8000): Promise<GeoPosition> {
       const code = posErr?.code;
       const message = posErr?.message ?? (err instanceof Error ? err.message : String(err));
       const kind: GeoErrorKind = code === 1 ? 'denied' : 'unavailable';
-      storeGeoDiag(`${new Date().toISOString().slice(0, 16)} code=${code ?? '?'} ${kind}: ${message}`);
+      const standalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+      storeGeoDiag(
+        `${new Date().toISOString().slice(0, 16)} code=${code ?? '?'} ${kind} standalone=${standalone}: ${message}`,
+      );
       throw new GeoError(kind, message);
     }
   }

@@ -457,3 +457,20 @@ w arkuszu podpisu, żeby rozstrzygnąć odmowę zgody od głębszego problemu
 iOS ze standalone PWA. Odrzucone: prompt uprawnień na starcie bez gestu
 (na iOS bywa cicho ignorowany) i globalny baner instrukcji (didaskalia –
 komunikat tylko wtedy, gdy użytkownik faktycznie prosi o lokalizację).
+
+**D-50 · Na zainstalowanej apce iOS pierwsze pytanie o GPS dopiero po
+dotknięciu celownika.** Zgłoszenie Dawida uściśliło D-49: na iPhonie
+(zainstalowana apka) lokalizacja była odrzucana **po cichu, bez żadnego
+pytania o zgodę** – na Androidzie działa bez zarzutu. Znana słabość
+WebKita: w standalone PWA zapytanie o pozycję zrobione przy starcie (bez
+gestu użytkownika) bywa cicho odrzucane, a iOS zapamiętuje to „nie",
+więc i późniejsze dotknięcie nie pomaga. Dlatego na iOS w trybie
+standalone (`navigator.standalone === true` + iPhone/iPad w UA) mapa
+**nie odpytuje GPS przy starcie** – pierwszym zapytaniem jest dopiero
+dotknięcie celownika, czyli gest, przy którym iOS najpewniej pokaże
+prompt. Android w standalone i wszystkie przeglądarki na komputerze
+działają jak dotąd (auto-centrowanie na starcie). Diag geo dostał flagę
+`standalone=…`, żeby przy odbiorze potwierdzić kontekst. Odrzucone:
+globalne wyłączenie auto-centrowania (niepotrzebna regresja na Androidzie
+i desktopie, gdzie działa) oraz sztuczne „rozgrzewanie" uprawnień
+niewidocznym przyciskiem (obejście łamiące zasadę oczywistego interfejsu).
