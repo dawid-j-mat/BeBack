@@ -44,7 +44,11 @@ function storeGeoDiag(text: string | null): void {
 // the first fix until the user taps the locate control (D-50). Android
 // standalone and every desktop browser are unaffected.
 export function isIosStandalone(): boolean {
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  // iPadOS masquerades as a Mac in the user agent, so a touch-capable
+  // "Macintosh" is an iPad for our purposes.
+  const ios =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
   const standalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
   return ios && standalone;
 }

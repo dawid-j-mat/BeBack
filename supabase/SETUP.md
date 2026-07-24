@@ -45,17 +45,22 @@ Nadawca bez własnej domeny – **Brevo** (darmowe 300 maili/dzień):
 1. Załóż konto na brevo.com.
 2. **Senders & IP → Senders** → dodaj adres nadawcy (może być Twój Gmail) →
    potwierdź klikając link z maila weryfikacyjnego Brevo.
-3. **SMTP & API → SMTP** → „Generate a new SMTP key". Zanotuj: serwer
-   `smtp-relay.brevo.com`, port `587`, login (Twój adres konta Brevo) i klucz
-   SMTP (hasło).
+3. **SMTP & API → SMTP** → „Generate a new SMTP key". Zanotuj z tej strony:
+   serwer `smtp-relay.brevo.com`, port `587`, **Login** (uwaga: Brevo pokazuje
+   go na tej stronie – w nowszych kontach to wygenerowany adres w rodzaju
+   `8xxxxx001@smtp-brevo.com`, nie Twój e-mail) i klucz SMTP (hasło).
 
 W Supabase: **Authentication → Emails → Set up SMTP** (przycisk z banera):
 - **Enable Custom SMTP**: włącz,
 - **Sender email**: potwierdzony adres nadawcy z Brevo,
 - **Sender name**: `BeBack`,
 - **Host**: `smtp-relay.brevo.com`, **Port**: `587`,
-- **Username**: login Brevo, **Password**: klucz SMTP,
+- **Username**: Login ze strony SMTP & API Brevo, **Password**: klucz SMTP,
 - Zapisz.
+
+Po włączeniu własnego SMTP dawny limit 2 maile/h znika; w zamian obowiązuje
+limit Supabase z **Authentication → Rate Limits** (domyślnie ok. 30 maili/h –
+w razie potrzeby można podnieść tam suwakiem).
 
 (Uwaga na dostarczalność: mail „od" adresu Gmail wysłany cudzym SMTP-em może
 czasem wpaść do spamu – w zaufanym gronie wystarczy raz oznaczyć „to nie spam".
