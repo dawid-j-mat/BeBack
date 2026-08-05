@@ -41,7 +41,17 @@ z **linkiem**, nie kodem. Żeby w mailu pojawił się kod, trzeba podpiąć wła
 nadawcę (SMTP). Przy okazji znika limit 2 maile/h wbudowanej poczty. Ten sam
 SMTP posłuży do zaproszeń (backlog).
 
-Nadawca bez własnej domeny – **Brevo** (darmowe 300 maili/dzień):
+**Uwaga na aktywację (sesja 11, na żywym organizmie):** Brevo blokuje wysyłkę
+SMTP na nowych kontach do czasu ręcznej akceptacji. Objaw: konfiguracja jest
+poprawna, a Auth Logs Supabase pokazują
+`502 "5.7.0 Your SMTP account is not yet activated"`. Trzeba wtedy uzupełnić
+profil konta (dane, weryfikacja telefonu) i poprosić o aktywację przez czat
+w panelu albo mailem na contact@sendinblue.com, opisując zastosowanie
+(prywatna, niekomercyjna apka; wyłącznie kody logowania do własnego grona;
+kilka maili dziennie). Jeśli aktywacja się przeciąga lub zostaje odrzucona –
+patrz wariant B niżej (Gmail), który działa od ręki.
+
+### Wariant A – Brevo (darmowe 300 maili/dzień, bez własnej domeny)
 1. Załóż konto na brevo.com.
 2. **Senders & IP → Senders** → dodaj adres nadawcy (może być Twój Gmail) →
    potwierdź klikając link z maila weryfikacyjnego Brevo.
@@ -65,6 +75,26 @@ w razie potrzeby można podnieść tam suwakiem).
 (Uwaga na dostarczalność: mail „od" adresu Gmail wysłany cudzym SMTP-em może
 czasem wpaść do spamu – w zaufanym gronie wystarczy raz oznaczyć „to nie spam".
 Własna domena rozwiązuje to docelowo.)
+
+### Wariant B – Gmail (działa od ręki, bez procedury aktywacyjnej)
+
+Gdy Brevo każe czekać na aktywację, wysyłkę obsłuży zwykłe konto Gmail. Limit
+~500 maili/dobę – przy gronie kilku–kilkunastu osób bez znaczenia. Wymaga
+weryfikacji dwuetapowej na koncie Google:
+
+1. Google → Zarządzaj kontem → **Bezpieczeństwo** → włącz **Weryfikację
+   dwuetapową** (jeśli nie jest włączona).
+2. Wejdź na **myaccount.google.com/apppasswords** → utwórz **hasło aplikacji**
+   (nazwa dowolna, np. `BeBack`). Google pokaże 16 znaków – to hasło do SMTP,
+   inne niż hasło do konta.
+3. W Supabase **Authentication → Emails → SMTP**:
+   - **Sender email** i **Username**: Twój adres Gmail,
+   - **Password**: te 16 znaków (bez spacji),
+   - **Host**: `smtp.gmail.com`, **Port**: `587`,
+   - **Sender name**: `BeBack`.
+
+Maile wychodzą wtedy naprawdę z Twojej skrzynki, więc nie trafiają do spamu.
+Docelowo (przy większym gronie) wrócić do Brevo lub własnej domeny.
 
 ### 4b. Szablon e-maila z kodem
 

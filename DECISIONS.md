@@ -505,3 +505,9 @@ sesja). Konfiguracja mieszka w panelach (Brevo + Supabase), nie w repo –
 kroki w `supabase/SETUP.md` §4. Odrzucone: Resend (wymaga własnej domeny do
 wysyłki na dowolne adresy – bariera dla braku domeny) i pozostanie przy
 wbudowanej poczcie (szablon zablokowany, logowanie kodem niemożliwe).
+Uzupełnienie z wdrożenia: Brevo blokuje wysyłkę na nowych kontach do
+ręcznej aktywacji (`502 "SMTP account is not yet activated"` w Auth Logs
+przy poprawnej konfiguracji), dlatego SETUP §4 dostał wariant B – SMTP
+Gmaila na haśle aplikacji: działa natychmiast, bez procedury akceptacyjnej,
+~500 maili/dobę i bez ryzyka spamu (mail wychodzi z prawdziwej skrzynki).
+Brevo pozostaje wariantem docelowym przy większym gronie.
