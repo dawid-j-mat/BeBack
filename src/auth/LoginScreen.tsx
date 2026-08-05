@@ -11,6 +11,22 @@ type Status = 'idle' | 'sending' | 'verifying' | 'error';
 // an installed PWA has its own storage jar and never sees a session created in
 // Safari. So there is no clicked link here at all.
 
+// Auth failures have to be diagnosable from a phone, which has no console:
+// the raw reason, its HTTP status and Supabase's error code all go on screen.
+// A bare message (Supabase sometimes sends none) would otherwise read as "0"
+// and hide whether the address, the account or the mail sender is at fault.
+function describeAuthError(error: { message?: string; status?: number; code?: string }): string {
+  const code = error.code;
+  const status = error.status;
+  const message = error.message?.trim();
+  const parts = [
+    message && message !== String(status) ? message : null,
+    code ? `[${code}]` : null,
+    status ? `(${status})` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' ') : 'brak szczegółów';
+}
+
 // A stale magic-link mail (from before D-48) still bounces back with error
 // params in the URL hash; read them once so we can say what happened.
 function readLinkError(): string | null {
@@ -39,8 +55,8 @@ export function LoginScreen() {
       options: { shouldCreateUser: false },
     });
     if (error) {
-      console.error('[beback] signInWithOtp error:', error.message);
-      setDetail(error.message);
+      console.error('[beback] signInWithOtp error:', error);
+      setDetail(describeAuthError(error));
       setStatus('error');
     } else {
       setCode('');
