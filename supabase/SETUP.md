@@ -19,19 +19,58 @@ do repozytorium – tylko do `.env.local` na Twoim komputerze i do panelu Vercel
 2. Wklej całą zawartość pliku `supabase/schema.sql` z repo → **Run**.
    Powinno zakończyć się bez błędów („Success. No rows returned").
 
-## 3. Zamknij rejestrację i załóż dwa konta
+## 3. Zamknij rejestrację i załóż konta z hasłami
 
 1. **Authentication → Sign In / Providers**: w sekcji ustawień użytkowników
    wyłącz **„Allow new users to sign up"**.
-2. **Authentication → Users → Add user → Create new user**: podaj swój e-mail
-   (zaznacz „Auto Confirm User"). Powtórz dla e-maila partnerki.
+2. **Authentication → Users → Add user → Create new user**: podaj e-mail,
+   **ustaw hasło** w polu Password i zaznacz „Auto Confirm User". Powtórz dla
+   każdego konta w gronie.
 
-## 4. Logowanie kodem – własny SMTP + szablon e-maila (od sesji 11, D-48/D-52)
+**Hasło dla konta, które już istnieje** – panel na to nie pozwala (pole hasła
+jest wyłącznie w oknie zakładania nowego użytkownika, a „Reset password" wysyła
+maila, czyli wymaga działającej poczty). Ustawia się je w **SQL Editorze**:
 
-Apka loguje **sześciocyfrowym kodem**, nie klikanym linkiem: na iPhonie
-zainstalowana apka (z ekranu początkowego) ma osobny magazyn niż Safari, więc
-link z maila logował w Safari, a apka sesji nie widziała. Kod przepisuje się
-w dowolnym kontekście, więc działa wszędzie tak samo.
+```sql
+update auth.users
+set encrypted_password = crypt('TWOJE-NOWE-HASLO', gen_salt('bf'))
+where email = 'twoj@adres.pl';
+```
+
+Gdyby wyskoczył błąd `function gen_salt(...) does not exist`, ta sama komenda
+z jawnym schematem rozszerzeń:
+
+```sql
+update auth.users
+set encrypted_password = extensions.crypt('TWOJE-NOWE-HASLO', extensions.gen_salt('bf'))
+where email = 'twoj@adres.pl';
+```
+
+Wynik `UPDATE 1` = gotowe, można się logować. **Nigdy nie kasuj i nie zakładaj
+konta od nowa, żeby nadać hasło**: `profiles.id` wisi na `auth.users` z regułą
+`on delete cascade`, więc razem z kontem znikają profil i wszystkie wpisy.
+
+### 3a. Dlaczego hasło (D-53)
+
+Logowanie hasłem idzie **wprost do Supabase, bez żadnego maila** – działa więc
+także wtedy, gdy poczta leży albo dostawca SMTP czeka na aktywację, i (co
+najważniejsze) w apce zainstalowanej na iPhonie, gdzie klikany link tworzy
+sesję w Safari, której zainstalowana apka nie widzi. To jest codzienna droga
+do apki; telefon zapamiętuje hasło w pęku kluczy, więc to jedno dotknięcie.
+Kod z e-maila (§4) zostaje jako droga zapasowa i dla nowo zapraszanych osób.
+
+**Awaryjnie**: gdy nikt nie może się zalogować (np. źle skonfigurowany SMTP),
+wystarczy nadać sobie hasło w panelu jak wyżej – dostęp wraca bez naprawiania
+poczty.
+
+## 4. Logowanie kodem z e-maila – własny SMTP + szablon (od sesji 11, D-48/D-52)
+
+Kod z e-maila to droga zapasowa (podstawową jest hasło, §3a). Apka wysyła
+**sześciocyfrowy kod**, nie klikany link: na iPhonie zainstalowana apka
+(z ekranu początkowego) ma osobny magazyn niż Safari, więc link logował
+w Safari, a apka sesji nie widziała. Kod przepisuje się w dowolnym kontekście,
+więc działa wszędzie tak samo. **Ta sekcja jest potrzebna dopiero do zaproszeń
+i logowania osób bez hasła – bez niej apka działa (na hasłach).**
 
 ### 4a. Podepnij własny SMTP (warunek konieczny)
 
@@ -41,7 +80,17 @@ z **linkiem**, nie kodem. Żeby w mailu pojawił się kod, trzeba podpiąć wła
 nadawcę (SMTP). Przy okazji znika limit 2 maile/h wbudowanej poczty. Ten sam
 SMTP posłuży do zaproszeń (backlog).
 
-Nadawca bez własnej domeny – **Brevo** (darmowe 300 maili/dzień):
+**Uwaga na aktywację (sesja 11, na żywym organizmie):** Brevo blokuje wysyłkę
+SMTP na nowych kontach do czasu ręcznej akceptacji. Objaw: konfiguracja jest
+poprawna, a Auth Logs Supabase pokazują
+`502 "5.7.0 Your SMTP account is not yet activated"`. Trzeba wtedy uzupełnić
+profil konta (dane, weryfikacja telefonu) i poprosić o aktywację przez czat
+w panelu albo mailem na contact@sendinblue.com, opisując zastosowanie
+(prywatna, niekomercyjna apka; wyłącznie kody logowania do własnego grona;
+kilka maili dziennie). Jeśli aktywacja się przeciąga lub zostaje odrzucona –
+patrz wariant B niżej (Gmail), który działa od ręki.
+
+### Wariant A – Brevo (darmowe 300 maili/dzień, bez własnej domeny)
 1. Załóż konto na brevo.com.
 2. **Senders & IP → Senders** → dodaj adres nadawcy (może być Twój Gmail) →
    potwierdź klikając link z maila weryfikacyjnego Brevo.
@@ -65,6 +114,26 @@ w razie potrzeby można podnieść tam suwakiem).
 (Uwaga na dostarczalność: mail „od" adresu Gmail wysłany cudzym SMTP-em może
 czasem wpaść do spamu – w zaufanym gronie wystarczy raz oznaczyć „to nie spam".
 Własna domena rozwiązuje to docelowo.)
+
+### Wariant B – Gmail (działa od ręki, bez procedury aktywacyjnej)
+
+Gdy Brevo każe czekać na aktywację, wysyłkę obsłuży zwykłe konto Gmail. Limit
+~500 maili/dobę – przy gronie kilku–kilkunastu osób bez znaczenia. Wymaga
+weryfikacji dwuetapowej na koncie Google:
+
+1. Google → Zarządzaj kontem → **Bezpieczeństwo** → włącz **Weryfikację
+   dwuetapową** (jeśli nie jest włączona).
+2. Wejdź na **myaccount.google.com/apppasswords** → utwórz **hasło aplikacji**
+   (nazwa dowolna, np. `BeBack`). Google pokaże 16 znaków – to hasło do SMTP,
+   inne niż hasło do konta.
+3. W Supabase **Authentication → Emails → SMTP**:
+   - **Sender email** i **Username**: Twój adres Gmail,
+   - **Password**: te 16 znaków (bez spacji),
+   - **Host**: `smtp.gmail.com`, **Port**: `587`,
+   - **Sender name**: `BeBack`.
+
+Maile wychodzą wtedy naprawdę z Twojej skrzynki, więc nie trafiają do spamu.
+Docelowo (przy większym gronie) wrócić do Brevo lub własnej domeny.
 
 ### 4b. Szablon e-maila z kodem
 

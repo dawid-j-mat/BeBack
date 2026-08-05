@@ -328,6 +328,32 @@
     `geo-granted` zapisana); iOS standalone z flagą → auto-centrowanie
     przy starcie; desktop: auto na starcie bez zmian.
 
+## Zrobione (sesja 12, sierpień 2026)
+
+- **Logowanie hasłem** (D-53) – po tym, jak nieaktywowane konto SMTP w Brevo
+  odcięło logowanie na wszystkich urządzeniach (mail = jedyna droga do apki):
+  - Ekran logowania (`src/auth/LoginScreen.tsx`) to teraz **e-mail + hasło**
+    (`signInWithPassword`) plus dyskretne „Zaloguj kodem z e-maila", które
+    prowadzi do dotychczasowego kroku z sześciocyfrowym kodem.
+  - Hasło idzie wprost do Supabase – **żadnego maila**, więc działa
+    w zainstalowanej apce na iPhonie (sesja powstaje w magazynie apki, nie
+    w Safari), niezależnie od stanu poczty i limitów wysyłki.
+    `autocomplete="current-password"` – pęk kluczy telefonu zapamiętuje hasło.
+  - Komunikaty błędów rozdzielone (złe hasło / nieudana wysyłka / zły kod),
+    a linia szczegółów pokazuje kod i status od Supabase zamiast gołego „0".
+  - **Krok ręczny**: hasła nadaje admin w panelu (Authentication → Users;
+    SETUP §3). Rejestracja pozostaje zamknięta – w apce nie ma zakładania
+    konta ani zmiany hasła.
+  - **Zero migracji bazy i zmian w RLS.**
+  - Weryfikacja E2E w Chromium w kontekście **iOS standalone** (UA iPhone'a +
+    `navigator.standalone`): złe hasło → „Nie pasuje e-mail albo hasło",
+    poprawne → wejście do apki, przy zerowej liczbie odwołań do endpointów
+    pocztowych (`/otp`, `/verify`).
+- **Stan poczty**: Brevo odrzuca wysyłkę do czasu ręcznej aktywacji konta
+  (`502 "SMTP account is not yet activated"` w Auth Logs mimo poprawnej
+  konfiguracji – SETUP §4 opisuje objaw i wariant zapasowy). Do czasu
+  aktywacji logowanie kodem nie działa; hasło działa niezależnie od tego.
+
 ## Środowiska
 
 - **Produkcja**: https://be-back-blond.vercel.app (Vercel buduje `main`;
@@ -411,11 +437,14 @@ Sesja 9 odebrana: filtry i zawijanie nazw działają; „W pobliżu" na OSM
 nadal padało, ale diag z D-45 dostarczył dane do diagnozy – stąd sesja 10.
 Sesja 10 odebrana: diag potwierdził, że Overpass jest z sieci Dawida
 nieosiągalny, a Photon reverse ubogi – stąd zamknięcie tematu w sesji 11.
-Sesja 11 czeka na odbiór. **Najpierw krok ręczny**: w Supabase zmienić
-szablon maila Magic Link na `{{ .Token }}` bez `{{ .ConfirmationURL }}`
-(SETUP §4) – inaczej mail przyjdzie z linkiem zamiast kodu. Potem po
-deployu i „Odśwież": (1) na iPhonie z **zainstalowanej** apki zalogować
-się kodem z maila – pętla logowania znika; (2) na mapie dotknąć celownika
+Sesja 12 czeka na odbiór. **Najpierw krok ręczny**: w Supabase nadać sobie
+(i partnerce) hasło – Authentication → Users → konto → ustaw hasło (SETUP §3).
+Potem po deployu: zalogować się e-mailem i hasłem na iPhonie z zainstalowanej
+apki (bez żadnego maila – to jest test D-53) i pozwolić telefonowi zapamiętać
+hasło. Logowanie kodem sprawdzić dopiero, gdy Brevo aktywuje konto.
+Sesja 11 w odbiorze częściowym: (1) na iPhonie z **zainstalowanej** apki
+logowanie kodem z maila – **zablokowane do czasu aktywacji SMTP** (patrz
+sesja 12); (2) na mapie dotknąć celownika
 – jeśli iOS poprosi o zgodę i ją dasz, mapa centruje na Tobie; jeśli GPS
 dalej nie działa, dotknąć podpisu i **przepisać linię „GPS · …"** z arkusza
 (kod błędu iOS rozstrzygnie, czy to odmowa zgody, czy głębszy problem

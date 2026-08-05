@@ -316,6 +316,10 @@
   opacity: 0.5;
   cursor: default;
 }
+/* the password screen offers a single alternative - centre it */
+.logowanie-link:only-child {
+  margin: 0 auto;
+}
 
 /* ---------- map ---------- */
 .mapa-wrap {
