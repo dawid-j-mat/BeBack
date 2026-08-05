@@ -27,8 +27,28 @@ do repozytorium – tylko do `.env.local` na Twoim komputerze i do panelu Vercel
    **ustaw hasło** w polu Password i zaznacz „Auto Confirm User". Powtórz dla
    każdego konta w gronie.
 
-Hasło można nadać także później: **Authentication → Users** → trzy kropki przy
-koncie → **Reset password** / edycja użytkownika → wpisz hasło → zapisz.
+**Hasło dla konta, które już istnieje** – panel na to nie pozwala (pole hasła
+jest wyłącznie w oknie zakładania nowego użytkownika, a „Reset password" wysyła
+maila, czyli wymaga działającej poczty). Ustawia się je w **SQL Editorze**:
+
+```sql
+update auth.users
+set encrypted_password = crypt('TWOJE-NOWE-HASLO', gen_salt('bf'))
+where email = 'twoj@adres.pl';
+```
+
+Gdyby wyskoczył błąd `function gen_salt(...) does not exist`, ta sama komenda
+z jawnym schematem rozszerzeń:
+
+```sql
+update auth.users
+set encrypted_password = extensions.crypt('TWOJE-NOWE-HASLO', extensions.gen_salt('bf'))
+where email = 'twoj@adres.pl';
+```
+
+Wynik `UPDATE 1` = gotowe, można się logować. **Nigdy nie kasuj i nie zakładaj
+konta od nowa, żeby nadać hasło**: `profiles.id` wisi na `auth.users` z regułą
+`on delete cascade`, więc razem z kontem znikają profil i wszystkie wpisy.
 
 ### 3a. Dlaczego hasło (D-53)
 
