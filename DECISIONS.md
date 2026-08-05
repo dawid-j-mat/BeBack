@@ -511,3 +511,28 @@ przy poprawnej konfiguracji), dlatego SETUP §4 dostał wariant B – SMTP
 Gmaila na haśle aplikacji: działa natychmiast, bez procedury akceptacyjnej,
 ~500 maili/dobę i bez ryzyka spamu (mail wychodzi z prawdziwej skrzynki).
 Brevo pozostaje wariantem docelowym przy większym gronie.
+
+**D-53 · Logowanie hasłem jako droga podstawowa; kod z e-maila jako
+zapasowa.** Wdrożenie D-48/D-52 pokazało wadę konstrukcyjną, której nie
+widać było na papierze: skoro **jedyna** droga do apki prowadziła przez
+dostarczony e-mail, to każda usterka poczty odcinała użytkownika od
+własnych danych – i dokładnie to się stało (nieaktywowane konto SMTP
+w Brevo = nikt się nie loguje, także na komputerze). Do tego logowanie
+przez link/kod z maila jest na zainstalowanym iPhonie najbardziej kruche
+(D-48). Dlatego ekran logowania dostaje **e-mail + hasło**
+(`signInWithPassword`) jako drogę codzienną: żądanie idzie wprost do
+Supabase, sesja powstaje w magazynie samej apki, więc działa identycznie
+w standalone PWA na iOS, offline'owo niezależnie od poczty i bez limitów
+wysyłki. Pole hasła ma `autocomplete="current-password"`, więc pęk kluczy
+telefonu zapamiętuje je i logowanie jest jednym dotknięciem. Kod z e-maila
+zostaje pod dyskretnym „Zaloguj kodem z e-maila" – dla osób bez hasła,
+nowych urządzeń i przyszłych zaproszeń. Hasła nadaje administrator
+w panelu Supabase (Authentication → Users), więc rejestracja pozostaje
+zamknięta (D-16) – w apce nie ma ani zakładania konta, ani zmiany hasła.
+Świadome odejście od „bez haseł do zapamiętania" z fazy koncepcyjnej:
+niezawodność wejścia do własnego dziennika okazała się ważniejsza niż
+elegancja logowania bezhasłowego. Odrzucone: wyłącznie hasła (zaproszenia
+i nowe urządzenia potrzebują drogi przez e-mail), „magic link" z powrotem
+(nie działa w standalone iOS) oraz reset hasła z apki (wymagałby
+działającej poczty – czyli tego, przed czym hasło ma chronić; hasło
+resetuje admin w panelu).

@@ -19,19 +19,38 @@ do repozytorium – tylko do `.env.local` na Twoim komputerze i do panelu Vercel
 2. Wklej całą zawartość pliku `supabase/schema.sql` z repo → **Run**.
    Powinno zakończyć się bez błędów („Success. No rows returned").
 
-## 3. Zamknij rejestrację i załóż dwa konta
+## 3. Zamknij rejestrację i załóż konta z hasłami
 
 1. **Authentication → Sign In / Providers**: w sekcji ustawień użytkowników
    wyłącz **„Allow new users to sign up"**.
-2. **Authentication → Users → Add user → Create new user**: podaj swój e-mail
-   (zaznacz „Auto Confirm User"). Powtórz dla e-maila partnerki.
+2. **Authentication → Users → Add user → Create new user**: podaj e-mail,
+   **ustaw hasło** w polu Password i zaznacz „Auto Confirm User". Powtórz dla
+   każdego konta w gronie.
 
-## 4. Logowanie kodem – własny SMTP + szablon e-maila (od sesji 11, D-48/D-52)
+Hasło można nadać także później: **Authentication → Users** → trzy kropki przy
+koncie → **Reset password** / edycja użytkownika → wpisz hasło → zapisz.
 
-Apka loguje **sześciocyfrowym kodem**, nie klikanym linkiem: na iPhonie
-zainstalowana apka (z ekranu początkowego) ma osobny magazyn niż Safari, więc
-link z maila logował w Safari, a apka sesji nie widziała. Kod przepisuje się
-w dowolnym kontekście, więc działa wszędzie tak samo.
+### 3a. Dlaczego hasło (D-53)
+
+Logowanie hasłem idzie **wprost do Supabase, bez żadnego maila** – działa więc
+także wtedy, gdy poczta leży albo dostawca SMTP czeka na aktywację, i (co
+najważniejsze) w apce zainstalowanej na iPhonie, gdzie klikany link tworzy
+sesję w Safari, której zainstalowana apka nie widzi. To jest codzienna droga
+do apki; telefon zapamiętuje hasło w pęku kluczy, więc to jedno dotknięcie.
+Kod z e-maila (§4) zostaje jako droga zapasowa i dla nowo zapraszanych osób.
+
+**Awaryjnie**: gdy nikt nie może się zalogować (np. źle skonfigurowany SMTP),
+wystarczy nadać sobie hasło w panelu jak wyżej – dostęp wraca bez naprawiania
+poczty.
+
+## 4. Logowanie kodem z e-maila – własny SMTP + szablon (od sesji 11, D-48/D-52)
+
+Kod z e-maila to droga zapasowa (podstawową jest hasło, §3a). Apka wysyła
+**sześciocyfrowy kod**, nie klikany link: na iPhonie zainstalowana apka
+(z ekranu początkowego) ma osobny magazyn niż Safari, więc link logował
+w Safari, a apka sesji nie widziała. Kod przepisuje się w dowolnym kontekście,
+więc działa wszędzie tak samo. **Ta sekcja jest potrzebna dopiero do zaproszeń
+i logowania osób bez hasła – bez niej apka działa (na hasłach).**
 
 ### 4a. Podepnij własny SMTP (warunek konieczny)
 
