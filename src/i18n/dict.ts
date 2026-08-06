@@ -75,7 +75,8 @@ export const dict = {
     centruj_aria: 'Wróć do mojej pozycji',
     wszystkie_aria: 'Pokaż wszystkie pinezki',
     geo_denied: 'Brak zgody na lokalizację. Włącz ją dla BeBack w ustawieniach telefonu.',
-    geo_denied_ios: 'iPhone: Ustawienia → Prywatność i bezpieczeństwo → Usługi lokalizacji.',
+    geo_denied_ios:
+      'iPhone: Ustawienia → Prywatność → Usługi lokalizacji → Witryny Safari → Podczas używania.',
     geo_unavailable: 'Nie udało się ustalić pozycji – spróbuj na otwartym terenie.',
     pryw_naglowek: 'Notatka prywatna – widzisz tylko Ty',
     zamknij: 'Zamknij',
@@ -171,7 +172,8 @@ export const dict = {
     centruj_aria: 'Back to my position',
     wszystkie_aria: 'Show all pins',
     geo_denied: 'Location is off. Turn it on for BeBack in your phone settings.',
-    geo_denied_ios: 'iPhone: Settings → Privacy & Security → Location Services.',
+    geo_denied_ios:
+      'iPhone: Settings → Privacy → Location Services → Safari Websites → While Using.',
     geo_unavailable: 'Could not get your position – try again in the open.',
     pryw_naglowek: 'Private note – only you can see it',
     zamknij: 'Close',

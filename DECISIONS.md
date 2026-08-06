@@ -536,3 +536,16 @@ i nowe urządzenia potrzebują drogi przez e-mail), „magic link" z powrotem
 (nie działa w standalone iOS) oraz reset hasła z apki (wymagałby
 działającej poczty – czyli tego, przed czym hasło ma chronić; hasło
 resetuje admin w panelu).
+
+**D-54 · Instrukcja lokalizacji na iOS wskazuje „Witryny Safari", nie
+aplikację.** Zgłoszenie z telefonu: komunikat kierował do Ustawienia →
+Prywatność → Usługi lokalizacji, gdzie Dawid **nie znalazł pozycji
+BeBack** – bo iOS nie pokazuje apek dodanych do ekranu początkowego jako
+osobnych aplikacji; uprawnieniem do lokalizacji dla nich zarządza wpis
+**Witryny Safari** (Safari Websites). Komunikat prowadzi teraz dokładnie
+tam. Osobno w SETUP: gdy iOS raz zapamiętał odmowę (a zapamiętał ją przy
+starych wersjach apki, które pytały o GPS bez gestu – przyczyna z D-50),
+samo przestawienie przełącznika może nie wystarczyć i trzeba usunąć apkę
+z ekranu początkowego i dodać ją ponownie – co czyści zapamiętaną decyzję.
+Jest to bezpieczne dopiero od D-53: powrót do apki nie zależy już od
+poczty, wystarczy hasło.
